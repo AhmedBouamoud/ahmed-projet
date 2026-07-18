@@ -1,4 +1,4 @@
-name: Deploy Smart History Platform to GitHub Pages
+name: Build and Deploy Mediterranean Master Lesson
 
 on:
   push:
@@ -9,31 +9,62 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
 concurrency:
-  group: pages
+  group: smart-history-pages
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build-and-deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout sources
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - name: Configure Pages
+      - name: Build master lesson from source payload
+        run: node tc-smart-history/build-v4.mjs
+
+      - name: Enforce pedagogical and technical quality gates
+        run: |
+          test -s tc-smart-history/dist/history.html
+          grep -q 'history-master-v4' tc-smart-history/dist/history.html
+          grep -q 'id="route"' tc-smart-history/dist/history.html
+          grep -q 'id="method-lab"' tc-smart-history/dist/history.html
+          grep -q 'id="archive"' tc-smart-history/dist/history.html
+          grep -q 'id="automation"' tc-smart-history/dist/history.html
+          node -e "const r=require('./tc-smart-history/dist/build-report.json'); if(r.sections<20||r.buttons<100||r.bytes<150000) process.exit(1); console.log(r)"
+
+      - name: Publish generated files to gh-pages branch
+        run: |
+          rm -rf /tmp/smart-history-pages
+          git worktree add --detach /tmp/smart-history-pages origin/gh-pages
+          rm -rf /tmp/smart-history-pages/tc-smart-history
+          mkdir -p /tmp/smart-history-pages/tc-smart-history
+          cp -R tc-smart-history/dist/. /tmp/smart-history-pages/tc-smart-history/
+          cp tc-smart-history/dist/index.html /tmp/smart-history-pages/index.html
+          touch /tmp/smart-history-pages/.nojekyll
+          cd /tmp/smart-history-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "Publish Mediterranean master lesson V4"
+          git push origin HEAD:gh-pages
+
+      - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
 
-      - name: Upload site artifact
+      - name: Upload generated site
         uses: actions/upload-pages-artifact@v4
         with:
-          path: tc-smart-history
+          path: tc-smart-history/dist
 
       - name: Deploy to GitHub Pages
         id: deployment
