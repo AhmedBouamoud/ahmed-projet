@@ -1,0 +1,47 @@
+name: Deploy Rihlat Aloula Bac Preview
+
+on:
+  push:
+    branches:
+      - rihlat-aloula-bac-preview
+    paths:
+      - '.rihlat-deploy/**'
+      - '.github/workflows/deploy-rihlat-aloula-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout preview branch
+        uses: actions/checkout@v4
+
+      - name: Rebuild preview website
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .rihlat-deploy/chunk*.b64 | tr -d '\n\r' | base64 --decode > /tmp/rihlat-preview.zip
+          rm -rf rihlat-aloula-bac-preview
+          mkdir -p rihlat-aloula-bac-preview
+          unzip -q /tmp/rihlat-preview.zip -d rihlat-aloula-bac-preview
+          test -f rihlat-aloula-bac-preview/index.html
+          test -f rihlat-aloula-bac-preview/lesson.html
+          test -f rihlat-aloula-bac-preview/about.html
+
+      - name: Publish generated files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add rihlat-aloula-bac-preview
+          if git diff --cached --quiet; then
+            echo 'Preview is already current.'
+          else
+            git commit -m 'Publish رحلة الأولى باك preview 0.1'
+            git push
+          fi
