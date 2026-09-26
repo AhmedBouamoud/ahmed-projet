@@ -1,6 +1,7 @@
 /* Daftr Qismi — one-click Al Hanane bridge v22 */
 (function directModule(){
   const APP='https://ahmedbouamoud.github.io/ahmed-projet/daftr-qismi-v3/';
+  let incomingText='';
 
   function toB64Url(text){
     const bytes=new TextEncoder().encode(String(text||''));
@@ -97,12 +98,19 @@
   }
 
   const oldHanane=renderers.hanane;
-  renderers.hanane=function(){return setupCard()+oldHanane()};
+  renderers.hanane=function(){
+    let html=oldHanane();
+    if(incomingText){
+      html=html.replace(/(<textarea id="hananePaste"[^>]*>)[\s\S]*?(<\/textarea>)/,(_,a,z)=>a+esc(incomingText)+z);
+    }
+    return setupCard()+html;
+  };
 
   const oldAction=action;
   action=function(act,id){
     if(act==='hanane-direct-copy'){copyBookmarklet();return}
     if(act==='hanane-direct-help'){help();return}
+    if(act==='hanane-clear'||act==='hanane-import')incomingText='';
     return oldAction(act,id);
   };
 
@@ -112,12 +120,14 @@
     let text='';
     try{text=fromB64Url(m[1])}catch(e){console.warn(e);return false}
     if(!text.trim())return false;
+    incomingText=text;
     currentView='hanane';
     render();
     const ta=document.getElementById('hananePaste');
     if(ta)ta.value=text;
     const parseBtn=document.querySelector('[data-act="hanane-parse"]');
     if(parseBtn)parseBtn.click();
+    window.__dqHananeIncomingApplied=true;
     history.replaceState(null,'',location.pathname+location.search);
     toast('وصلت بيانات الفرض من منصة الحنان');
     return true;
