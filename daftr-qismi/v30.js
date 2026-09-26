@@ -1,12 +1,15 @@
 /* Daftr Qismi v3.0 — secure multi-device cloud handoff */
 db.cloud ||= {};
 db.cloud.profile ||= {email:'',displayName:db.settings?.teacher||''};
-db.cloud.deviceId ||= localStorage.getItem('daftr_qismi_device_id') || ('dev_'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)));
+let savedDeviceId='';
+try{savedDeviceId=localStorage.getItem('daftr_qismi_device_id')||''}catch(e){}
+const newDeviceId='dev_'+(globalThis.crypto?.randomUUID?globalThis.crypto.randomUUID():Date.now().toString(36)+'_'+Math.random().toString(36).slice(2));
+db.cloud.deviceId ||= savedDeviceId || newDeviceId;
 db.cloud.deviceName ||= navigator.userAgent.includes('Android')?'هاتف Android':'هذا الجهاز';
 db.cloud.lastExport ||= '';
 db.cloud.lastImport ||= '';
-localStorage.setItem('daftr_qismi_device_id',db.cloud.deviceId);
-saveDB();
+try{localStorage.setItem('daftr_qismi_device_id',db.cloud.deviceId)}catch(e){console.warn('device id storage',e)}
+try{saveDB()}catch(e){console.warn('cloud metadata storage',e)}
 
 const CLOUD_SNAP_KEY='daftr_qismi_snapshots_v3';
 const CLOUD_FILE_EXT='.dqcloud';
@@ -55,14 +58,15 @@ async function decryptBackup(envelope,pass){
 }
 function cloudFileName(){const name=(db.cloud.profile.displayName||db.settings.teacher||'teacher').replace(/[^\p{L}\p{N}_-]+/gu,'-').slice(0,35)||'teacher';return `daftr-qismi-${name}-${today()}${CLOUD_FILE_EXT}`}
 function snapshots(){try{return JSON.parse(localStorage.getItem(CLOUD_SNAP_KEY)||'[]')}catch{return []}}
-function saveSnapshots(xs){localStorage.setItem(CLOUD_SNAP_KEY,JSON.stringify(xs.slice(0,5)))}
+function saveSnapshots(xs){try{localStorage.setItem(CLOUD_SNAP_KEY,JSON.stringify(xs.slice(0,3)));return true}catch(e){console.warn('snapshot storage full',e);return false}}
+function clonePlain(x){return JSON.parse(JSON.stringify(x))}
+function snapshotData(){const d=clonePlain(db);d.studentPhotos={};return d}
 function createLocalSnapshot(label='نسخة تلقائية'){
-  const xs=snapshots(),snap={id:uid('snap'),createdAt:new Date().toISOString(),label,deviceName:db.cloud.deviceName,data:structuredClone(db)};
-  xs.unshift(snap);saveSnapshots(xs);return snap;
+  try{const xs=snapshots(),snap={id:uid('snap'),createdAt:new Date().toISOString(),label,deviceName:db.cloud.deviceName,data:snapshotData()};xs.unshift(snap);if(!saveSnapshots(xs))return null;return snap}catch(e){console.warn('snapshot failed',e);return null}
 }
 function restoreSnapshot(id){
   const snap=snapshots().find(s=>s.id===id);if(!snap)return;
-  if(confirm('سيتم استبدال البيانات الحالية بهذه النسخة المحلية. متابعة؟')){createLocalSnapshot('قبل استرجاع نسخة محلية');db=structuredClone(snap.data);saveDB();currentClassId=db.classes?.[0]?.id||'';render();toast('تم استرجاع النسخة المحلية')}
+  if(confirm('سيتم استبدال البيانات الحالية بهذه النسخة المحلية. متابعة؟')){createLocalSnapshot('قبل استرجاع نسخة محلية');const keepPhotos=db.studentPhotos||{};db=clonePlain(snap.data);db.studentPhotos={...keepPhotos,...(db.studentPhotos||{})};saveDB();currentClassId=db.classes?.[0]?.id||'';render();toast('تم استرجاع النسخة المحلية')}
 }
 function deleteSnapshot(id){saveSnapshots(snapshots().filter(s=>s.id!==id));render()}
 function mergeArrays(local=[],remote=[]){
@@ -101,7 +105,7 @@ function showRestoreChoice(payload){
   modal('معاينة النسخة السحابية',`<div class="restore-preview"><div><small>الأقسام</small><b>${s.classes}</b></div><div><small>التلاميذ</small><b>${s.students}</b></div><div><small>النقط</small><b>${s.grades}</b></div></div><div class="small" style="margin-top:12px">الأستاذ: ${esc(s.teacher||'—')}<br>الجهاز: ${esc(s.device)}<br>تاريخ النسخة: ${esc(s.date)}</div><div class="security-note" style="margin-top:12px">يمكنك الاستبدال الكامل، أو الدمج الذكي مع بيانات هذا الجهاز. قبل أي عملية ينشئ التطبيق نسخة رجوع محلية تلقائيًا.</div><div class="cloud-actions" style="margin-top:12px"><button type="button" class="sync-secondary" id="mergeCloudBackup">دمج ذكي</button><button type="button" class="sync-primary" id="replaceCloudBackup">استبدال كامل</button></div>`,()=>false);
   setTimeout(()=>{
     $('#mergeCloudBackup').onclick=()=>{createLocalSnapshot('قبل الدمج السحابي');db=mergeDatabases(db,payload.data||{});db.cloud.lastImport=new Date().toISOString();saveDB();$('#modal').close();render();toast('تم دمج النسخة السحابية')};
-    $('#replaceCloudBackup').onclick=()=>{if(!confirm('استبدال جميع بيانات هذا الجهاز بالنسخة السحابية؟'))return;createLocalSnapshot('قبل الاستبدال السحابي');const localDevice={id:db.cloud.deviceId,name:db.cloud.deviceName};db=structuredClone(payload.data||defaultDB);db.cloud||={};db.cloud.deviceId=localDevice.id;db.cloud.deviceName=localDevice.name;db.cloud.lastImport=new Date().toISOString();saveDB();currentClassId=db.classes?.[0]?.id||'';$('#modal').close();render();toast('تم استرجاع النسخة السحابية')};
+    $('#replaceCloudBackup').onclick=()=>{if(!confirm('استبدال جميع بيانات هذا الجهاز بالنسخة السحابية؟'))return;createLocalSnapshot('قبل الاستبدال السحابي');const localDevice={id:db.cloud.deviceId,name:db.cloud.deviceName};db=clonePlain(payload.data||defaultDB);db.cloud||={};db.cloud.deviceId=localDevice.id;db.cloud.deviceName=localDevice.name;db.cloud.lastImport=new Date().toISOString();saveDB();currentClassId=db.classes?.[0]?.id||'';$('#modal').close();render();toast('تم استرجاع النسخة السحابية')};
   },0);
 }
 function cloudDate(v){return v?new Date(v).toLocaleString('ar-MA'):'—'}
@@ -153,12 +157,12 @@ bindDynamic=function(){
   };
 };
 
-if(!localStorage.getItem('daftr_qismi_snapshot_stamp')){
-  createLocalSnapshot('بداية Cloud 3.0');
-  localStorage.setItem('daftr_qismi_snapshot_stamp',today());
-}else if(localStorage.getItem('daftr_qismi_snapshot_stamp')!==today()){
-  createLocalSnapshot('نسخة يومية تلقائية');
-  localStorage.setItem('daftr_qismi_snapshot_stamp',today());
-}
+try{
+  const stamp=localStorage.getItem('daftr_qismi_snapshot_stamp')||'';
+  if(stamp!==today()){
+    createLocalSnapshot(stamp?'نسخة يومية تلقائية':'بداية Cloud 3.0');
+    localStorage.setItem('daftr_qismi_snapshot_stamp',today());
+  }
+}catch(e){console.warn('automatic snapshot skipped',e)}
 
 render();
