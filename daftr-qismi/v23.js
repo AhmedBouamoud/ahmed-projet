@@ -151,6 +151,7 @@ action=function(act,id){
   if(act==='edit-curriculum'){const x=db.curriculum.find(y=>y.id===id);if(x)curriculumModal(x);return}
   if(act==='delete-curriculum'){if(confirm('حذف هذا العنصر من المقرر؟')){db.curriculum=db.curriculum.filter(x=>x.id!==id);saveDB();render()}return}
   if(act==='print-monthly'){printMonthlyReport();return}
+  if(act==='save-reminder-days'){db.settings.reminderDays=Math.max(1,Math.min(14,Number($('#reminderDaysSetting')?.value)||4));saveDB();toast('تم حفظ إعداد التذكير');render();return}
   return v22Action(act,id);
 };
 
@@ -168,6 +169,11 @@ downloadBackup=function(){
 };
 if($('#backupBtn'))$('#backupBtn').onclick=downloadBackup;
 
+const v22Settings=renderers.settings;
+renderers.settings=function(){
+  const base=v22Settings();
+  return base+`<div class="card" style="margin-top:14px"><h3>التذكير الذكي</h3><div class="form-grid"><div class="field"><label>نبهني قبل الموعد بـ</label><input id="reminderDaysSetting" type="number" min="1" max="14" value="${db.settings.reminderDays||4}"></div></div><button class="primary" data-act="save-reminder-days" style="margin-top:10px">حفظ إعداد التذكير</button><p class="small">يستخدم في مركز القيادة وتنبيهات الفروض والواجبات والمواعيد القريبة.</p></div>`;
+};
 const v22Dashboard=renderers.dashboard;
 renderers.dashboard=function(){return renderers.command()};
 
