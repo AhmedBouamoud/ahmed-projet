@@ -1,5 +1,5 @@
-const CACHE='daftr-qismi-v19-google-qa';
-const ASSETS=['./','./index.html','./styles.css?v=15-mobile-nav','./bundle.js?v=17-qa','./mobile-nav.js?v=17-qa','./calendar-sync.js?v=18-qa','./google-sync.js?v=19-qa','./manifest.webmanifest','./icon-192.svg','./icon-512.svg'];
+const CACHE='daftr-qismi-v20-textbook-qa';
+const ASSETS=['./','./index.html','./styles.css?v=15-mobile-nav','./bundle.js?v=17-qa','./mobile-nav.js?v=17-qa','./calendar-sync.js?v=18-qa','./google-sync.js?v=19-qa','./textbook-link.js?v=20-qa','./textbook/index.html','./manifest.webmanifest','./icon-192.svg','./icon-512.svg'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(
@@ -21,17 +21,21 @@ self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET') return;
 
   if(event.request.mode==='navigate'){
-    event.respondWith(
-      fetch(event.request)
-        .then(response=>{
-          if(response && response.ok){
-            const copy=response.clone();
-            caches.open(CACHE).then(cache=>cache.put('./index.html',copy));
-          }
-          return response;
-        })
-        .catch(()=>caches.match('./index.html'))
-    );
+    event.respondWith((async()=>{
+      const url=new URL(event.request.url);
+      const textbook=url.pathname.includes('/daftr-qismi-v3/textbook/');
+      const fallback=textbook?'./textbook/index.html':'./index.html';
+      try{
+        const response=await fetch(event.request);
+        if(response&&response.ok){
+          const copy=response.clone();
+          caches.open(CACHE).then(cache=>cache.put(fallback,copy));
+        }
+        return response;
+      }catch{
+        return caches.match(fallback);
+      }
+    })());
     return;
   }
 
