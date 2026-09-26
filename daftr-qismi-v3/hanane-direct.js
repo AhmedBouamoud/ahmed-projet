@@ -17,20 +17,27 @@
   }
   function relevantText(doc=document){
     const all=[...doc.querySelectorAll('body *')];
-    const txt=el=>String(el.innerText||el.textContent||'').trim();
+    const txt=el=>String(el.innerText||el.textContent||'').replace(/\s+/g,' ').trim();
+    const rows=all.map(el=>({el,text:txt(el)})).filter(x=>x.text);
     const hasLesson=t=>/\bU\d{2}\s*-\s*L\d{2}\b/i.test(t);
     const hasCtrl=t=>/\bCtrl\s*:?\s*\d+\b/i.test(t);
     const hasDate=t=>/\b\d{1,2}[-\/]\d{1,2}[-\/]\d{4}\b/.test(t);
-    const candidates=all
-      .map(el=>({el,text:txt(el)}))
+    const cards=rows
       .filter(x=>x.text.length>=30&&x.text.length<=16000&&hasLesson(x.text)&&hasCtrl(x.text)&&hasDate(x.text))
       .sort((a,b)=>a.text.length-b.text.length);
-    let text=(candidates[0]?.text || String(doc.body?.innerText||doc.body?.textContent||'')).trim();
-    if(text.length>16000)text=text.slice(0,16000);
-    return text;
+    const card=cards[0]?.text||'';
+    const metaPatterns=[/ÉTABL\.?|ETABL\.?|ÉTABLISSEMENT|ETABLISSEMENT/i,/NIVEAU/i,/SEM\.?|SEMESTRE/i,/TYPE\s*NOTE/i];
+    const meta=[];
+    for(const rx of metaPatterns){
+      const hit=rows.filter(x=>rx.test(x.text)&&x.text.length<=220).sort((a,b)=>a.text.length-b.text.length)[0]?.text;
+      if(hit&&!meta.includes(hit)&&!card.includes(hit))meta.push(hit);
+    }
+    let text=[...meta,card].filter(Boolean).join('\n').trim();
+    if(!text)text=String(doc.body?.innerText||doc.body?.textContent||'').trim().slice(0,16000);
+    return text.slice(0,16000);
   }
   function bookmarklet(appUrl=APP){
-    const code="(()=>{try{const A="+JSON.stringify(appUrl)+";const X=e=>String(e.innerText||e.textContent||'').trim();const E=[...document.querySelectorAll('body *')].map(e=>({e,t:X(e)})).filter(x=>x.t.length>=30&&x.t.length<=16000&&/\\bU\\d{2}\\s*-\\s*L\\d{2}\\b/i.test(x.t)&&/\\bCtrl\\s*:?\\s*\\d+\\b/i.test(x.t)&&/\\b\\d{1,2}[-\\/]\\d{1,2}[-\\/]\\d{4}\\b/.test(x.t)).sort((a,b)=>a.t.length-b.t.length);let T=(E[0]?.t||X(document.body)||'').trim().slice(0,16000);if(!T)throw new Error('لم أجد بيانات الفرض');const B=new TextEncoder().encode(T);let S='';for(const b of B)S+=String.fromCharCode(b);const P=btoa(S).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');location.href=A+'#hanane64='+P}catch(e){alert('تعذر إرسال الفرض: '+e.message)}})()";
+    const code="(()=>{try{const A="+JSON.stringify(appUrl)+";const X=e=>String(e.innerText||e.textContent||'').replace(/\\s+/g,' ').trim();const R=[...document.querySelectorAll('body *')].map(e=>({e,t:X(e)})).filter(x=>x.t);const E=R.filter(x=>x.t.length>=30&&x.t.length<=16000&&/\\bU\\d{2}\\s*-\\s*L\\d{2}\\b/i.test(x.t)&&/\\bCtrl\\s*:?\\s*\\d+\\b/i.test(x.t)&&/\\b\\d{1,2}[-\\/]\\d{1,2}[-\\/]\\d{4}\\b/.test(x.t)).sort((a,b)=>a.t.length-b.t.length);const C=E[0]?.t||'';const M=[];for(const q of [/ÉTABL\\.?|ETABL\\.?|ÉTABLISSEMENT|ETABLISSEMENT/i,/NIVEAU/i,/SEM\\.?|SEMESTRE/i,/TYPE\\s*NOTE/i]){const h=R.filter(x=>q.test(x.t)&&x.t.length<=220).sort((a,b)=>a.t.length-b.t.length)[0]?.t;if(h&&!M.includes(h)&&!C.includes(h))M.push(h)}let T=[...M,C].filter(Boolean).join('\\n').trim();if(!T)T=X(document.body).slice(0,16000);if(!T)throw new Error('لم أجد بيانات الفرض');const B=new TextEncoder().encode(T);let S='';for(const b of B)S+=String.fromCharCode(b);const P=btoa(S).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');location.href=A+'#hanane64='+P}catch(e){alert('تعذر إرسال الفرض: '+e.message)}})()";
     return 'javascript:'+code;
   }
   async function copyBookmarklet(){
