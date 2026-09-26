@@ -1,7 +1,7 @@
 /* Daftr Qismi v3.0 — secure multi-device cloud handoff */
 db.cloud ||= {};
 db.cloud.profile ||= {email:'',displayName:db.settings?.teacher||''};
-db.cloud.deviceId ||= localStorage.getItem('daftr_qismi_device_id') || ('dev_'+crypto.randomUUID());
+db.cloud.deviceId ||= localStorage.getItem('daftr_qismi_device_id') || ('dev_'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)));
 db.cloud.deviceName ||= navigator.userAgent.includes('Android')?'هاتف Android':'هذا الجهاز';
 db.cloud.lastExport ||= '';
 db.cloud.lastImport ||= '';
@@ -47,6 +47,7 @@ async function encryptBackup(payload,pass){
 }
 async function decryptBackup(envelope,pass){
   if(envelope?.format==='daftr-qismi-cloud')return envelope;
+  if(envelope?.classes&&envelope?.students)return {format:'daftr-qismi-cloud',version:2,exportedAt:'',device:{name:'نسخة قديمة'},profile:{displayName:envelope.settings?.teacher||''},data:envelope};
   if(envelope?.format!=='daftr-qismi-cloud-encrypted')throw new Error('صيغة النسخة غير معروفة');
   const salt=b64ToBytes(envelope.salt),iv=b64ToBytes(envelope.iv),cipher=b64ToBytes(envelope.data),key=await deriveCloudKey(pass,salt,['decrypt']);
   const clear=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,cipher);
