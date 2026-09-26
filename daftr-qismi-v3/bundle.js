@@ -906,7 +906,7 @@ try{
 render();
 
 
-/* Mobile drawer controller v15 */
+/* Mobile drawer controller v16 */
 (function(){
   const sidebar=document.getElementById('sidebar');
   const menuBtn=document.getElementById('menuBtn');
@@ -914,39 +914,59 @@ render();
   if(!sidebar||!menuBtn) return;
 
   function isMobile(){return window.matchMedia('(max-width:900px)').matches}
+  function syncDrawerState(){
+    const open=isMobile() && sidebar.classList.contains('open');
+    document.body.classList.toggle('sidebar-open',open);
+    menuBtn.setAttribute('aria-expanded',open?'true':'false');
+    menuBtn.setAttribute('aria-controls','sidebar');
+    if(overlay){
+      overlay.hidden=!open;
+      overlay.setAttribute('aria-hidden',open?'false':'true');
+    }
+  }
   function openSidebar(){
     if(!isMobile()) return;
     sidebar.classList.add('open');
-    document.body.classList.add('sidebar-open');
-    if(overlay) overlay.hidden=false;
-    menuBtn.setAttribute('aria-expanded','true');
+    syncDrawerState();
   }
   function closeSidebar(){
     sidebar.classList.remove('open');
-    document.body.classList.remove('sidebar-open');
-    menuBtn.setAttribute('aria-expanded','false');
-    if(overlay) setTimeout(()=>{if(!sidebar.classList.contains('open')) overlay.hidden=true},230);
+    syncDrawerState();
   }
-  function toggleSidebar(){sidebar.classList.contains('open')?closeSidebar():openSidebar()}
+  function toggleSidebar(){
+    sidebar.classList.contains('open')?closeSidebar():openSidebar();
+  }
 
-  menuBtn.onclick=(e)=>{e.preventDefault();e.stopPropagation();toggleSidebar()};
-  menuBtn.setAttribute('aria-controls','sidebar');
-  menuBtn.setAttribute('aria-expanded','false');
+  // Remove the old inline handler and install one authoritative controller.
+  menuBtn.onclick=null;
+  menuBtn.addEventListener('click',e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    toggleSidebar();
+  });
 
-  if(overlay) overlay.onclick=(e)=>{e.preventDefault();closeSidebar()};
+  if(overlay){
+    overlay.addEventListener('click',e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      closeSidebar();
+    });
+  }
 
   document.querySelectorAll('#nav .nav-item').forEach(btn=>{
-    btn.addEventListener('click',()=>closeSidebar(),{capture:true});
+    btn.addEventListener('click',closeSidebar,{capture:true});
   });
 
-  document.addEventListener('keydown',e=>{if(e.key==='Escape') closeSidebar()});
-  window.addEventListener('resize',()=>{if(!isMobile()) closeSidebar()});
-
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSidebar()});
   document.addEventListener('click',e=>{
-    if(!isMobile()||!sidebar.classList.contains('open')) return;
-    if(!sidebar.contains(e.target)&&e.target!==menuBtn) closeSidebar();
+    if(!isMobile()||!sidebar.classList.contains('open'))return;
+    if(!sidebar.contains(e.target)&&!menuBtn.contains(e.target))closeSidebar();
   });
+  window.addEventListener('resize',()=>{if(!isMobile())closeSidebar();else syncDrawerState()});
+  window.addEventListener('popstate',closeSidebar);
 
-  window.addEventListener('popstate',()=>closeSidebar());
+  // Keep body lock and overlay synchronized even if another legacy handler
+  // changes only the sidebar class.
+  new MutationObserver(syncDrawerState).observe(sidebar,{attributes:true,attributeFilter:['class']});
   closeSidebar();
 })();
