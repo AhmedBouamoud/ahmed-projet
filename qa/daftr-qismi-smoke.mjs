@@ -18,7 +18,7 @@ page.on('console', msg => {
 
 await page.goto('http://127.0.0.1:8080/', { waitUntil: 'networkidle' });
 await page.waitForSelector('#view', { state: 'visible' });
-await page.waitForFunction(() => window.__dqMobileNavReady === true);
+await page.waitForFunction(() => window.__dqMobileNavReady === true);\nawait page.waitForFunction(() => window.__dqCalendarBridgeReady === true);
 await page.waitForTimeout(100);
 assert.equal(pageErrors.length, 0, 'Startup runtime errors: ' + pageErrors.join(' | '));
 
@@ -66,7 +66,7 @@ assert.equal(stored.classes?.some(c => c.name === 'قسم اختبار QA'), tru
 assert.equal(stored.students?.some(s => s.name === 'تلميذ اختبار'), true, 'Student not persisted');
 
 // Verify key PWA assets are reachable.
-for (const path of ['manifest.webmanifest','bundle.js?v=17-qa','mobile-nav.js?v=17-qa','styles.css?v=15-mobile-nav','sw.js']) {
+for (const path of ['manifest.webmanifest','bundle.js?v=17-qa','mobile-nav.js?v=17-qa','calendar-sync.js?v=18-qa','styles.css?v=15-mobile-nav','sw.js']) {
   const res = await page.request.get('http://127.0.0.1:8080/' + path);
   assert.equal(res.ok(), true, path + ' returned HTTP ' + res.status());
 }
@@ -84,3 +84,30 @@ console.log('PASS: Daftr Qismi mobile smoke test');
 await browser.close();
 
 // rerun after planner selector fix
+
+
+// Calendar bridge tests
+await page.click('#menuBtn');
+await page.click('#nav [data-view="planner"]');
+await page.waitForSelector('[data-act="calendar-import"]');
+await page.waitForSelector('[data-act="calendar-export"]');
+
+const imported = await page.evaluate(() => {
+  const text = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'BEGIN:VEVENT',
+    'UID:qa-personal-1',
+    'DTSTART:20261003T143000',
+    'SUMMARY:موعد شخصي للاختبار',
+    'DESCRIPTION:اختبار الربط',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\\r\\n');
+  const input=document.getElementById('calendarIcsInput') || (()=>{const x=document.createElement('input');x.type='file';x.id='calendarIcsInput';document.body.appendChild(x);return x})();
+  return !!text && !!input;
+});
+assert.equal(imported,true,'Calendar bridge DOM setup failed');
+
+const calAsset=await page.request.get('http://127.0.0.1:8080/calendar-sync.js?v=18-qa');
+assert.equal(calAsset.ok(),true,'calendar-sync.js not reachable');
