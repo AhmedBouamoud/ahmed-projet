@@ -22,6 +22,7 @@ await page.waitForFunction(() => window.__dqMobileNavReady === true);
 await page.waitForFunction(() => window.__dqCalendarBridgeReady === true);
 await page.waitForFunction(() => window.__dqGoogleSyncReady === true);
 await page.waitForFunction(() => window.__dqTextbookLinkReady === true);
+await page.waitForFunction(() => window.__dqHananeReady === true);
 await page.waitForTimeout(100);
 assert.equal(pageErrors.length, 0, 'Startup runtime errors: ' + pageErrors.join(' | '));
 
@@ -69,7 +70,7 @@ assert.equal(stored.classes?.some(c => c.name === 'قسم اختبار QA'), tru
 assert.equal(stored.students?.some(s => s.name === 'تلميذ اختبار'), true, 'Student not persisted');
 
 // Verify key PWA assets are reachable.
-for (const path of ['manifest.webmanifest','bundle.js?v=17-qa','mobile-nav.js?v=17-qa','calendar-sync.js?v=18-qa','google-sync.js?v=19-qa','textbook-link.js?v=20-qa','textbook/index.html','styles.css?v=15-mobile-nav','sw.js']) {
+for (const path of ['manifest.webmanifest','bundle.js?v=17-qa','mobile-nav.js?v=17-qa','calendar-sync.js?v=18-qa','google-sync.js?v=19-qa','textbook-link.js?v=20-qa','hanane-import.js?v=21-qa','textbook/index.html','styles.css?v=15-mobile-nav','sw.js']) {
   const res = await page.request.get('http://127.0.0.1:8080/' + path);
   assert.equal(res.ok(), true, path + ' returned HTTP ' + res.status());
 }
@@ -258,6 +259,70 @@ const linkedHtml=await page.request.get('http://127.0.0.1:8080/textbook/');
 assert.equal(linkedHtml.ok(),true,'linked textbook page not reachable');
 
 
+
+// Al Hanane import test
+const hananeSample = [
+  'ÉTABL. : H2',
+  'NIVEAU : 1 AC',
+  'SEM. : S1',
+  'TYPE NOTE : Contrôle Classe',
+  'CONTRÔLES',
+  'Disciplines Sociales',
+  '30-10-2026 08:30',
+  '1 AC/C',
+  'Salle : ...',
+  'Ctrl : 01',
+  'U01-L01 - التاريخ: حضارة بلاد الرافدين',
+  'U01-L02 - التاريخ: حضارة مصر القديمة',
+  'U03-L01 - الجغرافيا: الأرض شكلها وتمثيلها',
+  'U03-L02 - الجغرافيا: التدرب على رسم الإحداثيات',
+  'U05-L01 - التربية على المواطنة: الكرامة',
+  'U05-L02 - التربية على المواطنة: الحرية'
+].join('\n');
+
+const hananeParsed = await page.evaluate(text => window.__dqHananeTest.parse(text), hananeSample);
+assert.equal(hananeParsed.institution,'H2','Hanane institution parse failed');
+assert.equal(hananeParsed.level,'1 AC','Hanane level parse failed');
+assert.equal(hananeParsed.semester,'S1','Hanane semester parse failed');
+assert.equal(hananeParsed.noteType,'Contrôle Classe','Hanane note type parse failed');
+assert.equal(hananeParsed.date,'2026-10-30','Hanane date parse failed');
+assert.equal(hananeParsed.time,'08:30','Hanane time parse failed');
+assert.equal(hananeParsed.classLabel,'1 AC/C','Hanane class parse failed');
+assert.equal(hananeParsed.controlNo,'01','Hanane control number parse failed');
+assert.equal(hananeParsed.lessons.length,6,'Hanane lesson count parse failed');
+
+const hananeImport = await page.evaluate((text) => {
+  const p=window.__dqHananeTest.parse(text);
+  const dbx=JSON.parse(localStorage.getItem('daftr_qismi_v1')||'{}');
+  const cid=dbx.classes?.find(c=>c.name==='قسم اختبار QA')?.id || dbx.classes?.[0]?.id;
+  const first=window.__dqHananeTest.importParsed(p,cid,{addPlanner:true,addCurriculum:true,markDone:false});
+  const second=window.__dqHananeTest.importParsed(p,cid,{addPlanner:true,addCurriculum:true,markDone:false});
+  const after=JSON.parse(localStorage.getItem('daftr_qismi_v1')||'{}');
+  return {
+    cid,
+    created:first.createdControl,
+    duplicateCreated:second.createdControl,
+    controls:(after.hananeControls||[]).filter(x=>x.classId===cid&&x.sourceKey===p.sourceKey).length,
+    assessments:(after.assessments||[]).filter(x=>x.hananeControlId===first.control.id).length,
+    planner:(after.plannerEvents||[]).filter(x=>x.hananeControlId===first.control.id).length,
+    curriculum:(after.curriculum||[]).filter(x=>x.classId===cid&&x.source==='hanane').length
+  };
+}, hananeSample);
+assert.equal(hananeImport.created,true,'Hanane first import did not create control');
+assert.equal(hananeImport.duplicateCreated,false,'Hanane duplicate import created a second control');
+assert.equal(hananeImport.controls,1,'Hanane control duplicated');
+assert.equal(hananeImport.assessments,1,'Hanane assessment not linked exactly once');
+assert.equal(hananeImport.planner,1,'Hanane planner event not linked exactly once');
+assert.equal(hananeImport.curriculum,6,'Hanane curriculum lessons not imported');
+
+await page.evaluate(()=>{currentView='hanane';render()});
+await page.waitForSelector('#hananePaste');
+assert((await page.locator('#view').innerText()).includes('جسر الحنان'),'Hanane view did not render');
+assert((await page.locator('#view').innerText()).includes('2026-10-30'),'Imported Hanane control not visible');
+
+const hananeAsset=await page.request.get('http://127.0.0.1:8080/hanane-import.js?v=21-qa');
+assert.equal(hananeAsset.ok(),true,'hanane-import.js not reachable');
+
 assert.equal(pageErrors.length, 0, 'Runtime errors after calendar tests: ' + pageErrors.join(' | '));
-console.log('PASS: Daftr Qismi mobile + calendar + linked textbook QA');
+console.log('PASS: Daftr Qismi mobile + calendar + linked textbook + Hanane QA');
 await browser.close();

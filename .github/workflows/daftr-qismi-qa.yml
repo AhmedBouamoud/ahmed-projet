@@ -35,6 +35,7 @@ jobs:
           test -f daftr-qismi-v3/calendar-sync.js
           test -f daftr-qismi-v3/google-sync.js
           test -f daftr-qismi-v3/textbook-link.js
+          test -f daftr-qismi-v3/hanane-import.js
           test -f daftr-qismi-v3/textbook/index.html
           test -f daftr-qismi-v3/manifest.webmanifest
           node --check daftr-qismi-v3/bundle.js
@@ -42,6 +43,7 @@ jobs:
           node --check daftr-qismi-v3/calendar-sync.js
           node --check daftr-qismi-v3/google-sync.js
           node --check daftr-qismi-v3/textbook-link.js
+          node --check daftr-qismi-v3/hanane-import.js
           python3 -c "import re,pathlib; s=pathlib.Path('daftr-qismi-v3/textbook/index.html').read_text(encoding='utf-8'); pathlib.Path('/tmp/dq-textbook-inline.js').write_text('\\n'.join(re.findall(r'<script[^>]*>([\\s\\S]*?)</script>',s,flags=re.I)),encoding='utf-8')"
           node --check /tmp/dq-textbook-inline.js
           node --check qa/daftr-qismi-smoke.mjs
@@ -52,6 +54,8 @@ jobs:
           grep -q 'bundle.js?v=17-qa' daftr-qismi-v3/index.html
           grep -q 'styles.css?v=15-mobile-nav' daftr-qismi-v3/index.html
           grep -q 'textbook-link.js?v=20-qa' daftr-qismi-v3/index.html
+          grep -q 'hanane-import.js?v=21-qa' daftr-qismi-v3/index.html
+          grep -q 'data-view="hanane"' daftr-qismi-v3/index.html
           grep -q '__dqTextbookLinkedReady' daftr-qismi-v3/textbook/index.html
 
       - name: Install Playwright
