@@ -715,7 +715,7 @@ const v22Bind=bindDynamic;
 bindDynamic=function(){
   v22Bind();
   $$('.curriculum-status').forEach(sel=>sel.onchange=()=>{const x=db.curriculum.find(y=>y.id===sel.dataset.id);if(x){x.status=sel.value;x.completedDate=sel.value==='done'?(x.completedDate||today()):'';saveDB();render()}});
-  $('.day-head [data-act="add-day-event"]').forEach(btn=>btn.onclick=()=>{plannerSelectedDate=btn.dataset.date||today();plannerModal(null,plannerSelectedDate)});
+  $$('.day-head [data-act="add-day-event"]').forEach(btn=>btn.onclick=()=>{plannerSelectedDate=btn.dataset.date||today();plannerModal(null,plannerSelectedDate)});
   const mm=$('#monthlyMonth');if(mm)mm.onchange=()=>{monthlyReportMonth=mm.value||today().slice(0,7);render()};
 };
 
@@ -906,47 +906,4 @@ try{
 render();
 
 
-/* Mobile drawer controller v15 */
-(function(){
-  const sidebar=document.getElementById('sidebar');
-  const menuBtn=document.getElementById('menuBtn');
-  const overlay=document.getElementById('sidebarOverlay');
-  if(!sidebar||!menuBtn) return;
 
-  function isMobile(){return window.matchMedia('(max-width:900px)').matches}
-  function openSidebar(){
-    if(!isMobile()) return;
-    sidebar.classList.add('open');
-    document.body.classList.add('sidebar-open');
-    if(overlay) overlay.hidden=false;
-    menuBtn.setAttribute('aria-expanded','true');
-  }
-  function closeSidebar(){
-    sidebar.classList.remove('open');
-    document.body.classList.remove('sidebar-open');
-    menuBtn.setAttribute('aria-expanded','false');
-    if(overlay) setTimeout(()=>{if(!sidebar.classList.contains('open')) overlay.hidden=true},230);
-  }
-  function toggleSidebar(){sidebar.classList.contains('open')?closeSidebar():openSidebar()}
-
-  menuBtn.onclick=(e)=>{e.preventDefault();e.stopPropagation();toggleSidebar()};
-  menuBtn.setAttribute('aria-controls','sidebar');
-  menuBtn.setAttribute('aria-expanded','false');
-
-  if(overlay) overlay.onclick=(e)=>{e.preventDefault();closeSidebar()};
-
-  document.querySelectorAll('#nav .nav-item').forEach(btn=>{
-    btn.addEventListener('click',()=>closeSidebar(),{capture:true});
-  });
-
-  document.addEventListener('keydown',e=>{if(e.key==='Escape') closeSidebar()});
-  window.addEventListener('resize',()=>{if(!isMobile()) closeSidebar()});
-
-  document.addEventListener('click',e=>{
-    if(!isMobile()||!sidebar.classList.contains('open')) return;
-    if(!sidebar.contains(e.target)&&e.target!==menuBtn) closeSidebar();
-  });
-
-  window.addEventListener('popstate',()=>closeSidebar());
-  closeSidebar();
-})();
