@@ -1,0 +1,61 @@
+name: Daftr Qismi QA
+
+on:
+  push:
+    branches: [daftr-qismi-dev]
+    paths:
+      - 'daftr-qismi-v3/**'
+      - 'qa/daftr-qismi-smoke.mjs'
+      - '.github/workflows/daftr-qismi-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Static syntax and manifest checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f daftr-qismi-v3/index.html
+          test -f daftr-qismi-v3/bundle.js
+          test -f daftr-qismi-v3/styles.css
+          test -f daftr-qismi-v3/sw.js
+          test -f daftr-qismi-v3/manifest.webmanifest
+          node --check daftr-qismi-v3/bundle.js
+          node --check daftr-qismi-v3/sw.js
+          node -e "JSON.parse(require('fs').readFileSync('daftr-qismi-v3/manifest.webmanifest','utf8')); console.log('manifest ok')"
+          grep -q 'sidebarOverlay' daftr-qismi-v3/index.html
+          grep -q 'Mobile drawer controller v15' daftr-qismi-v3/bundle.js
+          grep -q 'Mobile drawer v15' daftr-qismi-v3/styles.css
+          grep -q 'bundle.js?v=15-mobile-nav' daftr-qismi-v3/index.html
+          grep -q 'styles.css?v=15-mobile-nav' daftr-qismi-v3/index.html
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start local app server
+        run: |
+          python3 -m http.server 8080 --directory daftr-qismi-v3 >/tmp/daftr-server.log 2>&1 &
+          echo $! > /tmp/daftr-server.pid
+          for i in {1..20}; do
+            curl -fsS http://127.0.0.1:8080/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/daftr-server.log
+          exit 1
+
+      - name: Mobile browser smoke test
+        run: node qa/daftr-qismi-smoke.mjs
