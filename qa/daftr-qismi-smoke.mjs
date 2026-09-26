@@ -18,7 +18,8 @@ page.on('console', msg => {
 
 await page.goto('http://127.0.0.1:8080/', { waitUntil: 'networkidle' });
 await page.waitForSelector('#view', { state: 'visible' });
-await page.waitForFunction(() => window.__dqMobileNavReady === true);\nawait page.waitForFunction(() => window.__dqCalendarBridgeReady === true);
+await page.waitForFunction(() => window.__dqMobileNavReady === true);
+await page.waitForFunction(() => window.__dqCalendarBridgeReady === true);
 await page.waitForTimeout(100);
 assert.equal(pageErrors.length, 0, 'Startup runtime errors: ' + pageErrors.join(' | '));
 
