@@ -176,11 +176,11 @@ const googleImportedAgain = await page.evaluate(() => {
 assert.equal(googleImportedAgain,1,'Google event duplicated on second pull');
 
 const googleBodyOk = await page.evaluate(() => {
-  const dbx=JSON.parse(localStorage.getItem('daftr_qismi_v1')||'{}');
-  const e=(dbx.plannerEvents||[]).find(x=>!x.personal&&x.date);
-  if(!e)return false;
+  const e={id:'qa-app-event',date:new Date().toISOString().slice(0,10),time:'10:00',title:'موعد من التطبيق',details:'QA',type:'lesson'};
   const body=window.__dqGoogleSyncTest.googleBody(e);
-  return body?.extendedProperties?.private?.daftrQismiId===e.id && !!body.start && !!body.end;
+  return body?.extendedProperties?.private?.daftrQismiId===e.id
+    && body?.extendedProperties?.private?.daftrQismiType==='lesson'
+    && !!body.start?.dateTime && !!body.end?.dateTime;
 });
 assert.equal(googleBodyOk,true,'Google push body is missing app marker');
 
