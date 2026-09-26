@@ -33,10 +33,12 @@ jobs:
           test -f daftr-qismi-v3/sw.js
           test -f daftr-qismi-v3/mobile-nav.js
           test -f daftr-qismi-v3/calendar-sync.js
+          test -f daftr-qismi-v3/google-sync.js
           test -f daftr-qismi-v3/manifest.webmanifest
           node --check daftr-qismi-v3/bundle.js
           node --check daftr-qismi-v3/sw.js
           node --check daftr-qismi-v3/calendar-sync.js
+          node --check daftr-qismi-v3/google-sync.js
           node --check qa/daftr-qismi-smoke.mjs
           node -e "JSON.parse(require('fs').readFileSync('daftr-qismi-v3/manifest.webmanifest','utf8')); console.log('manifest ok')"
           grep -q 'sidebarOverlay' daftr-qismi-v3/index.html
