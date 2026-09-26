@@ -86,28 +86,43 @@ await browser.close();
 // rerun after planner selector fix
 
 
+
+
 // Calendar bridge tests
 await page.click('#menuBtn');
 await page.click('#nav [data-view="planner"]');
 await page.waitForSelector('[data-act="calendar-import"]');
 await page.waitForSelector('[data-act="calendar-export"]');
 
-const imported = await page.evaluate(() => {
-  const text = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'BEGIN:VEVENT',
-    'UID:qa-personal-1',
-    'DTSTART:20261003T143000',
-    'SUMMARY:موعد شخصي للاختبار',
-    'DESCRIPTION:اختبار الربط',
-    'END:VEVENT',
-    'END:VCALENDAR'
-  ].join('\\r\\n');
-  const input=document.getElementById('calendarIcsInput') || (()=>{const x=document.createElement('input');x.type='file';x.id='calendarIcsInput';document.body.appendChild(x);return x})();
-  return !!text && !!input;
-});
-assert.equal(imported,true,'Calendar bridge DOM setup failed');
+const ics = [
+  'BEGIN:VCALENDAR',
+  'VERSION:2.0',
+  'BEGIN:VEVENT',
+  'UID:qa-personal-1',
+  'DTSTART:20261003T143000',
+  'SUMMARY:موعد شخصي للاختبار',
+  'DESCRIPTION:اختبار الربط',
+  'END:VEVENT',
+  'END:VCALENDAR'
+].join('\r\n');
 
-const calAsset=await page.request.get('http://127.0.0.1:8080/calendar-sync.js?v=18-qa');
-assert.equal(calAsset.ok(),true,'calendar-sync.js not reachable');
+const parsed = await page.evaluate(text => window.__dqCalendarBridgeTest.parseIcs(text), ics);
+assert.equal(parsed.length, 1, 'ICS parser did not return one event');
+assert.equal(parsed[0].title, 'موعد شخصي للاختبار', 'ICS title mismatch');
+assert.equal(parsed[0].date, '2026-10-03', 'ICS date mismatch');
+assert.equal(parsed[0].time, '14:30', 'ICS time mismatch');
+
+const firstImport = await page.evaluate(text => window.__dqCalendarBridgeTest.importText(text), ics);
+assert.equal(firstImport.filter(e => e.uid === 'qa-personal-1').length, 1, 'Personal event was not imported');
+await page.waitForTimeout(120);
+assert((await page.locator('#view').innerText()).includes('موعد شخصي للاختبار'), 'Imported personal event is not visible in planner');
+
+const secondImport = await page.evaluate(text => window.__dqCalendarBridgeTest.importText(text), ics);
+assert.equal(secondImport.filter(e => e.uid === 'qa-personal-1').length, 1, 'Duplicate ICS event was imported');
+
+const exported = await page.evaluate(() => window.__dqCalendarBridgeTest.buildIcs(window.__dqCalendarBridgeTest.plannerExportEvents()));
+assert(exported.includes('BEGIN:VCALENDAR'), 'ICS export is invalid');
+assert(!exported.includes('qa-personal-1'), 'Imported personal events must not loop back into app export');
+
+const calAsset = await page.request.get('http://127.0.0.1:8080/calendar-sync.js?v=18-qa');
+assert.equal(calAsset.ok(), true, 'calendar-sync.js not reachable');
