@@ -64,7 +64,7 @@ jobs:
       - name: Upload generated site
         uses: actions/upload-pages-artifact@v4
         with:
-          path: tc-smart-history/dist
+          path: /tmp/smart-history-pages
 
       - name: Deploy to GitHub Pages
         id: deployment
