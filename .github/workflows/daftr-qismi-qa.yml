@@ -31,14 +31,15 @@ jobs:
           test -f daftr-qismi-v3/bundle.js
           test -f daftr-qismi-v3/styles.css
           test -f daftr-qismi-v3/sw.js
+          test -f daftr-qismi-v3/mobile-nav.js
           test -f daftr-qismi-v3/manifest.webmanifest
           node --check daftr-qismi-v3/bundle.js
           node --check daftr-qismi-v3/sw.js
           node -e "JSON.parse(require('fs').readFileSync('daftr-qismi-v3/manifest.webmanifest','utf8')); console.log('manifest ok')"
           grep -q 'sidebarOverlay' daftr-qismi-v3/index.html
-          grep -q 'Mobile drawer controller v16' daftr-qismi-v3/bundle.js
+          grep -q 'Daftr Qismi mobile navigation v17' daftr-qismi-v3/mobile-nav.js
           grep -q 'Mobile drawer v15' daftr-qismi-v3/styles.css
-          grep -q 'bundle.js?v=16-drawer-qa' daftr-qismi-v3/index.html
+          grep -q 'bundle.js?v=17-qa' daftr-qismi-v3/index.html
           grep -q 'styles.css?v=15-mobile-nav' daftr-qismi-v3/index.html
 
       - name: Install Playwright
