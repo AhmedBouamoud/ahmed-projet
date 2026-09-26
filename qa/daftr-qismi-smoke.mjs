@@ -81,8 +81,7 @@ await page.waitForFunction(async () => {
 
 assert.equal(pageErrors.length, 0, 'Runtime errors: ' + pageErrors.join(' | '));
 
-console.log('PASS: Daftr Qismi mobile smoke test');
-await browser.close();
+
 
 // rerun after planner selector fix
 
@@ -95,12 +94,14 @@ await page.click('#nav [data-view="planner"]');
 await page.waitForSelector('[data-act="calendar-import"]');
 await page.waitForSelector('[data-act="calendar-export"]');
 
+const qaDate = new Date().toISOString().slice(0,10);
+const qaIcsDate = qaDate.replace(/-/g,'') + 'T143000';
 const ics = [
   'BEGIN:VCALENDAR',
   'VERSION:2.0',
   'BEGIN:VEVENT',
   'UID:qa-personal-1',
-  'DTSTART:20261003T143000',
+  'DTSTART:' + qaIcsDate,
   'SUMMARY:موعد شخصي للاختبار',
   'DESCRIPTION:اختبار الربط',
   'END:VEVENT',
@@ -110,7 +111,7 @@ const ics = [
 const parsed = await page.evaluate(text => window.__dqCalendarBridgeTest.parseIcs(text), ics);
 assert.equal(parsed.length, 1, 'ICS parser did not return one event');
 assert.equal(parsed[0].title, 'موعد شخصي للاختبار', 'ICS title mismatch');
-assert.equal(parsed[0].date, '2026-10-03', 'ICS date mismatch');
+assert.equal(parsed[0].date, qaDate, 'ICS date mismatch');
 assert.equal(parsed[0].time, '14:30', 'ICS time mismatch');
 
 const firstImport = await page.evaluate(text => window.__dqCalendarBridgeTest.importText(text), ics);
@@ -127,3 +128,8 @@ assert(!exported.includes('qa-personal-1'), 'Imported personal events must not l
 
 const calAsset = await page.request.get('http://127.0.0.1:8080/calendar-sync.js?v=18-qa');
 assert.equal(calAsset.ok(), true, 'calendar-sync.js not reachable');
+
+
+assert.equal(pageErrors.length, 0, 'Runtime errors after calendar tests: ' + pageErrors.join(' | '));
+console.log('PASS: Daftr Qismi mobile + calendar bridge QA');
+await browser.close();
