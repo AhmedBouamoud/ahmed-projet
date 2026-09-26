@@ -1,4 +1,5 @@
 name: Build and Deploy Mediterranean Master Lesson
+# republish daftr-qismi-v3
 
 on:
   push:
