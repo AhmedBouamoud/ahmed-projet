@@ -142,5 +142,6 @@
     bookmarklet
   };
   window.__dqHananeDirectReady=true;
+  window.addEventListener('hashchange',receiveHash);
   setTimeout(receiveHash,0);
 })();

@@ -373,7 +373,6 @@ await page.waitForFunction(()=>window.__dqHananeReady===true && window.__dqHanan
 await page.waitForSelector('#hananePaste');
 await page.waitForTimeout(150);
 const incomingValue=await page.locator('#hananePaste').inputValue();
-console.log('INCOMING_HANANE_DEBUG',JSON.stringify({expected:directExtract.text,actual:incomingValue,hash:await page.evaluate(()=>location.hash),preview:await page.locator('#hananePreview').innerText()}));
 assert.equal(incomingValue,directExtract.text,'Incoming Hanane payload was not placed in textarea');
 assert((await page.locator('#hananePreview').innerText()).includes('2026-10-30'),'Incoming Hanane payload was not parsed automatically');
 assert.equal(await page.evaluate(()=>location.hash),'','Hanane payload hash was not cleared after receipt');
