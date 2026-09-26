@@ -357,6 +357,9 @@ const directExtract = await page.evaluate(html => {
 }, fakeHananeHtml);
 assert(directExtract.text.includes('Ctrl : 01'),'Direct extractor missed control card');
 assert(!directExtract.text.includes('معلومات أخرى غير مطلوبة'),'Direct extractor captured unrelated page text');
+assert.equal(directExtract.parsed.institution,'H2','Direct extractor institution parse failed');
+assert.equal(directExtract.parsed.level,'1 AC','Direct extractor level parse failed');
+assert.equal(directExtract.parsed.semester,'S1','Direct extractor semester parse failed');
 assert.equal(directExtract.parsed.date,'2026-10-30','Direct extractor date parse failed');
 assert.equal(directExtract.parsed.lessons.length,6,'Direct extractor lesson parse failed');
 assert.equal(directExtract.roundtrip,true,'Direct payload encoding round-trip failed');
