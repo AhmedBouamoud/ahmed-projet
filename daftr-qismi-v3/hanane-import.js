@@ -53,21 +53,21 @@
     let semester=lineAfter(lines,/^(?:SEM\.?|SEMESTRE)\s*/i);
     let noteType=lineAfter(lines,/^(?:TYPE\s*NOTE)\s*/i);
 
-    const dt=joined.match(/\b(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})\b(?:\s+(\d{1,2}:\d{2}))?/);
+    const dt=joined.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})(?:\s+(\d{1,2}:\d{2}))?/);
     const date=dt?isoDate(dt[1],dt[2],dt[3]):'';
     const time=dt?.[4]||'';
 
     let classLabel='';
     for(const line of lines){
-      const m=line.match(/\b(\d+\s*(?:AC|BAC|TC)(?:\s*\/\s*[A-Z0-9]+)?)\b/i);
+      const m=line.match(/(\d+\s*(?:AC|BAC|TC)(?:\s*\/\s*[A-Z0-9]+)?)/i);
       if(m && !/NIVEAU/i.test(line)){classLabel=clean(m[1].replace(/\s*\/\s*/g,'/')); if(line.match(/\//))break}
     }
     if(!classLabel){
-      const m=joined.match(/\b(\d+\s*(?:AC|BAC|TC)(?:\s*\/\s*[A-Z0-9]+)?)\b/i);
+      const m=joined.match(/(\d+\s*(?:AC|BAC|TC)(?:\s*\/\s*[A-Z0-9]+)?)/i);
       classLabel=m?clean(m[1].replace(/\s*\/\s*/g,'/')):'';
     }
 
-    const ctrl=joined.match(/\bCtrl\s*:?\s*(\d+)\b/i);
+    const ctrl=joined.match(/Ctrl\s*:?\s*(\d+)/i);
     const controlNo=ctrl?ctrl[1].padStart(2,'0'):'';
 
     let discipline='';
@@ -75,7 +75,7 @@
     if(discLine)discipline=discLine.replace(/^(?:DISCIPLINE\s*:?\s*)/i,'').trim();
 
     const lessons=[];
-    const codeRx=/\b(U\d{2}\s*-\s*L\d{2})\b/i;
+    const codeRx=/(U\d{2}\s*-\s*L\d{2})/i;
     for(const line of lines){
       const m=line.match(codeRx); if(!m)continue;
       const code=m[1].replace(/\s/g,'').toUpperCase();
@@ -85,7 +85,7 @@
     }
 
     if(!lessons.length){
-      const rx=/\b(U\d{2}-L\d{2})\b\s*[-–—:]?\s*([^\n]{2,100})/gi; let m;
+      const rx=/(U\d{2}-L\d{2})\s*[-–—:]?\s*([^\n]{2,100})/gi; let m;
       while((m=rx.exec(joined))){const code=m[1].toUpperCase(),title=clean(m[2]);if(!lessons.some(x=>x.code===code))lessons.push({code,title})}
     }
 
