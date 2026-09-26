@@ -1,0 +1,43 @@
+name: Deploy GitHub Pages Snapshot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deploy-pages-snapshot.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-snapshot
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout published branch
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+          fetch-depth: 1
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: .
+
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
