@@ -63,7 +63,7 @@ function nextActionText(){
 }
 function notifyDue(){
   if(!('Notification'in window)){toast('الإشعارات غير مدعومة في هذا المتصفح');return}
-  const fire=()=>{const xs=dueItems(Number(db.settings.reminderDays||4)).filter(x=>dateDiff(x.date,today())>=0);if(!xs.length){toast('لا توجد استحقاقات قريبة');return}new Notification('دفتر القسم الذكي',{body:`${xs.length} استحقاق قريب. ${xs[0].title} — ${dueLabel(xs[0])}`,icon:'icon-192.svg'});}
+  const fire=async()=>{const xs=dueItems(Number(db.settings.reminderDays||4)).filter(x=>dateDiff(x.date,today())>=0);if(!xs.length){toast('لا توجد استحقاقات قريبة');return}const body=`${xs.length} استحقاق قريب. ${xs[0].title} — ${dueLabel(xs[0])}`;try{if('serviceWorker'in navigator){const reg=await navigator.serviceWorker.ready;await reg.showNotification('دفتر القسم الذكي',{body,icon:'icon-192.svg',badge:'icon-192.svg',tag:'daftr-due'});}else new Notification('دفتر القسم الذكي',{body,icon:'icon-192.svg'});}catch(e){console.error(e);toast('تعذر إظهار التنبيه')}}; 
   if(Notification.permission==='granted')fire();else Notification.requestPermission().then(p=>{if(p==='granted')fire();else toast('لم يتم السماح بالإشعارات')});
 }
 
@@ -145,7 +145,7 @@ action=function(act,id){
   if(act==='week-prev'){plannerWeekOffset--;render();return}
   if(act==='week-next'){plannerWeekOffset++;render();return}
   if(act==='week-today'){plannerWeekOffset=0;render();return}
-  if(act==='add-day-event'){const b=event?.currentTarget;plannerModal(null,b?.dataset.date||today());return}
+  if(act==='add-day-event'){plannerModal(null,plannerSelectedDate||today());return}
   if(act==='edit-planner-event'){const e=db.plannerEvents.find(x=>x.id===id);if(e)plannerModal(e);return}
   if(act==='add-curriculum'){curriculumModal();return}
   if(act==='edit-curriculum'){const x=db.curriculum.find(y=>y.id===id);if(x)curriculumModal(x);return}
@@ -158,6 +158,7 @@ const v22Bind=bindDynamic;
 bindDynamic=function(){
   v22Bind();
   $$('.curriculum-status').forEach(sel=>sel.onchange=()=>{const x=db.curriculum.find(y=>y.id===sel.dataset.id);if(x){x.status=sel.value;x.completedDate=sel.value==='done'?(x.completedDate||today()):'';saveDB();render()}});
+  $('.day-head [data-act="add-day-event"]').forEach(btn=>btn.onclick=()=>{plannerSelectedDate=btn.dataset.date||today();plannerModal(null,plannerSelectedDate)});
   const mm=$('#monthlyMonth');if(mm)mm.onchange=()=>{monthlyReportMonth=mm.value||today().slice(0,7);render()};
 };
 
