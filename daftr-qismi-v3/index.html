@@ -7,7 +7,7 @@
   <title>دفتر القسم الذكي</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon-192.svg" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=15-mobile-nav" />
 </head>
 <body>
   <div class="app-shell">
@@ -53,6 +53,7 @@
       </nav>
       <div class="privacy-note">تبقى البيانات على جهازك في هذه النسخة. خذ نسخة احتياطية دوريًا.</div>
     </aside>
+    <button id="sidebarOverlay" class="sidebar-overlay" aria-label="إغلاق القائمة" hidden></button>
 
     <main class="main">
       <div class="mobile-head">
@@ -74,6 +75,6 @@
   </dialog>
 
   <input type="file" id="restoreInput" accept="application/json" hidden />
-  <script src="bundle.js?v=14-stable"></script>
+  <script src="bundle.js?v=15-mobile-nav"></script>
 </body>
 </html>

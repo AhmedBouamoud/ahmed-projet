@@ -1,5 +1,5 @@
-const CACHE='daftr-qismi-v14-stable';
-const ASSETS=['./','./index.html','./styles.css','./bundle.js','./manifest.webmanifest','./icon-192.svg','./icon-512.svg'];
+const CACHE='daftr-qismi-v15-mobile-nav';
+const ASSETS=['./','./index.html','./styles.css?v=15-mobile-nav','./bundle.js?v=15-mobile-nav','./manifest.webmanifest','./icon-192.svg','./icon-512.svg'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(
