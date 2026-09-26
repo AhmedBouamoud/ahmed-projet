@@ -36,7 +36,7 @@
   }
   function plannerExportEvents(){
     const out=[];
-    db.plannerEvents.forEach(e=>{
+    db.plannerEvents.filter(e=>!(e.personal||e.source==='personal-calendar')).forEach(e=>{
       out.push({
         uid:eventUid(e),date:e.date,time:e.time||'',title:e.title||'موعد',
         details:[e.details||'',e.classId?(db.classes.find(c=>c.id===e.classId)?.name||''):''].filter(Boolean).join(' — '),
@@ -195,5 +195,15 @@
   };
 
   render();
+  window.__dqCalendarBridgeTest={
+    parseIcs,
+    buildIcs,
+    plannerExportEvents,
+    importText:async(text)=>{
+      const file=new File([text],'calendar-test.ics',{type:'text/calendar'});
+      await importIcsFile(file);
+      return db.plannerEvents.filter(e=>e.personal||e.source==='personal-calendar').map(e=>({uid:e.calendarUid,title:e.title,date:e.date,time:e.time}));
+    }
+  };
   window.__dqCalendarBridgeReady=true;
 })();
