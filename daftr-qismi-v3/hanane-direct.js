@@ -19,10 +19,18 @@
     const all=[...doc.querySelectorAll('body *')];
     const structured=el=>{
       if(!el)return '';
-      const inner=String(el.innerText||'').trim();
-      if(inner)return inner;
-      const leaves=[...el.querySelectorAll('*')].filter(x=>x.children.length===0).map(x=>String(x.textContent||'').trim()).filter(Boolean);
-      return (leaves.length?leaves.join('\n'):String(el.textContent||'')).trim();
+      let out='';
+      const blockTags=/^(DIV|P|LI|SECTION|ARTICLE|HEADER|FOOTER|MAIN|ASIDE|TR|TD|TH|UL|OL|H[1-6]|BR)$/;
+      const walk=node=>{
+        if(node.nodeType===3){out+=node.nodeValue||'';return}
+        if(node.nodeType!==1)return;
+        const block=blockTags.test(node.tagName||'');
+        if(block)out+='\n';
+        for(const child of node.childNodes)walk(child);
+        if(block)out+='\n';
+      };
+      walk(el);
+      return out.replace(/[ \t]+/g,' ').replace(/\n\s*\n+/g,'\n').trim();
     };
     const raw=el=>structured(el);
     const flat=el=>raw(el).replace(/\s+/g,' ').trim();
@@ -35,7 +43,7 @@
     const inst=page.match(/(?:ÉTABL\.?|ETABL\.?|ÉTABLISSEMENT|ETABLISSEMENT)\s*:?\s*([A-Z0-9-]+)/i)?.[1]||'';
     const level=page.match(/NIVEAU\s*:?\s*(\d+\s*(?:AC|BAC|TC)(?:\s*\/\s*[A-Z0-9]+)?)/i)?.[1]||'';
     const sem=page.match(/(?:SEM\.?|SEMESTRE)\s*:?\s*(S\d+)/i)?.[1]||'';
-    const type=page.match(/TYPE\s*NOTE\s*:?\s*(.{2,60}?)(?=\s+(?:CONTRÔLES?|Disciplines?|\d{1,2}[-\/]\d{1,2}[-\/]\d{4}|Ctrl\s*:)|$)/i)?.[1]?.trim()||'';
+    const type=(page.match(/TYPE\s*NOTE\s*[:：]?\s*(.{2,60}?)(?=(?:CONTRÔLES?|Disciplines?|\d{1,2}[-\/]\d{1,2}[-\/]\d{4}|Ctrl\s*:|$))/i)?.[1]||'').replace(/^[:：\s]+/,'').trim();
     const meta=[];
     if(inst)meta.push('ÉTABL. : '+inst);
     if(level)meta.push('NIVEAU : '+level);
@@ -46,7 +54,7 @@
     return text.slice(0,16000);
   }
   function bookmarklet(appUrl=APP){
-    const code="(()=>{try{const A="+JSON.stringify(appUrl)+";const Q=e=>{if(!e)return '';const I=String(e.innerText||'').trim();if(I)return I;const L=[...e.querySelectorAll('*')].filter(x=>x.children.length===0).map(x=>String(x.textContent||'').trim()).filter(Boolean);return (L.length?L.join('\\n'):String(e.textContent||'')).trim()};const F=e=>Q(e).replace(/\\s+/g,' ').trim();const R=[...document.querySelectorAll('body *')].map(e=>({e,t:F(e)})).filter(x=>x.t);const E=R.filter(x=>x.t.length>=30&&x.t.length<=16000&&/U\\d{2}\\s*-\\s*L\\d{2}/i.test(x.t)&&/Ctrl\\s*:?\\s*\\d+/i.test(x.t)&&/\\d{1,2}[-\\/]\\d{1,2}[-\\/]\\d{4}/.test(x.t)).sort((a,b)=>a.t.length-b.t.length);const C=E[0]?Q(E[0].e):'';const P=F(document.body);const I=P.match(/(?:ÉTABL\\.?|ETABL\\.?|ÉTABLISSEMENT|ETABLISSEMENT)\\s*:?\\s*([A-Z0-9-]+)/i)?.[1]||'';const L=P.match(/NIVEAU\\s*:?\\s*(\\d+\\s*(?:AC|BAC|TC)(?:\\s*\\/\\s*[A-Z0-9]+)?)/i)?.[1]||'';const M=P.match(/(?:SEM\\.?|SEMESTRE)\\s*:?\\s*(S\\d+)/i)?.[1]||'';const N=P.match(/TYPE\\s*NOTE\\s*:?\\s*(.{2,60}?)(?=\\s+(?:CONTRÔLES?|Disciplines?|\\d{1,2}[-\\/]\\d{1,2}[-\\/]\\d{4}|Ctrl\\s*:)|$)/i)?.[1]?.trim()||'';const H=[];if(I)H.push('ÉTABL. : '+I);if(L)H.push('NIVEAU : '+L);if(M)H.push('SEM. : '+M);if(N)H.push('TYPE NOTE : '+N);let T=[...H,C].filter(Boolean).join('\\n').trim();if(!T)T=Q(document.body).slice(0,16000);if(!T)throw new Error('لم أجد بيانات الفرض');const B=new TextEncoder().encode(T);let S='';for(const b of B)S+=String.fromCharCode(b);const Z=btoa(S).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');location.href=A+'#hanane64='+Z}catch(e){alert('تعذر إرسال الفرض: '+e.message)}})()";
+    const code="(()=>{try{const A="+JSON.stringify(appUrl)+";const Q=e=>{if(!e)return '';let O='';const G=/^(DIV|P|LI|SECTION|ARTICLE|HEADER|FOOTER|MAIN|ASIDE|TR|TD|TH|UL|OL|H[1-6]|BR)$/;const W=n=>{if(n.nodeType===3){O+=n.nodeValue||'';return}if(n.nodeType!==1)return;const B=G.test(n.tagName||'');if(B)O+='\\n';for(const c of n.childNodes)W(c);if(B)O+='\\n'};W(e);return O.replace(/[ \\t]+/g,' ').replace(/\\n\\s*\\n+/g,'\\n').trim()};const F=e=>Q(e).replace(/\\s+/g,' ').trim();const R=[...document.querySelectorAll('body *')].map(e=>({e,t:F(e)})).filter(x=>x.t);const E=R.filter(x=>x.t.length>=30&&x.t.length<=16000&&/U\\d{2}\\s*-\\s*L\\d{2}/i.test(x.t)&&/Ctrl\\s*:?\\s*\\d+/i.test(x.t)&&/\\d{1,2}[-\\/]\\d{1,2}[-\\/]\\d{4}/.test(x.t)).sort((a,b)=>a.t.length-b.t.length);const C=E[0]?Q(E[0].e):'';const P=F(document.body);const I=P.match(/(?:ÉTABL\\.?|ETABL\\.?|ÉTABLISSEMENT|ETABLISSEMENT)\\s*:?\\s*([A-Z0-9-]+)/i)?.[1]||'';const L=P.match(/NIVEAU\\s*:?\\s*(\\d+\\s*(?:AC|BAC|TC)(?:\\s*\\/\\s*[A-Z0-9]+)?)/i)?.[1]||'';const M=P.match(/(?:SEM\\.?|SEMESTRE)\\s*:?\\s*(S\\d+)/i)?.[1]||'';const N=(P.match(/TYPE\\s*NOTE\\s*[:：]?\\s*(.{2,60}?)(?=(?:CONTRÔLES?|Disciplines?|\\d{1,2}[-\\/]\\d{1,2}[-\\/]\\d{4}|Ctrl\\s*:|$))/i)?.[1]||'').replace(/^[:：\\s]+/,'').trim();const H=[];if(I)H.push('ÉTABL. : '+I);if(L)H.push('NIVEAU : '+L);if(M)H.push('SEM. : '+M);if(N)H.push('TYPE NOTE : '+N);let T=[...H,C].filter(Boolean).join('\\n').trim();if(!T)T=Q(document.body).slice(0,16000);if(!T)throw new Error('لم أجد بيانات الفرض');const D=new TextEncoder().encode(T);let S='';for(const b of D)S+=String.fromCharCode(b);const Z=btoa(S).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');location.href=A+'#hanane64='+Z}catch(e){alert('تعذر إرسال الفرض: '+e.message)}})()";
     return 'javascript:'+code;
   }
   async function copyBookmarklet(){
