@@ -1,5 +1,5 @@
-const CACHE='daftr-qismi-v20-textbook-qa';
-const ASSETS=['./','./index.html','./styles.css?v=15-mobile-nav','./bundle.js?v=17-qa','./mobile-nav.js?v=17-qa','./calendar-sync.js?v=18-qa','./google-sync.js?v=19-qa','./textbook-link.js?v=20-qa','./textbook/index.html','./manifest.webmanifest','./icon-192.svg','./icon-512.svg'];
+const CACHE='daftr-qismi-v21-hanane-qa';
+const ASSETS=['./','./index.html','./styles.css?v=15-mobile-nav','./bundle.js?v=17-qa','./mobile-nav.js?v=17-qa','./calendar-sync.js?v=18-qa','./google-sync.js?v=19-qa','./textbook-link.js?v=20-qa','./hanane-import.js?v=21-qa','./textbook/index.html','./manifest.webmanifest','./icon-192.svg','./icon-512.svg'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(
