@@ -63,7 +63,7 @@ assert.equal(stored.classes?.some(c => c.name === 'قسم اختبار QA'), tru
 assert.equal(stored.students?.some(s => s.name === 'تلميذ اختبار'), true, 'Student not persisted');
 
 // Verify key PWA assets are reachable.
-for (const path of ['manifest.webmanifest','bundle.js?v=15-mobile-nav','styles.css?v=15-mobile-nav','sw.js']) {
+for (const path of ['manifest.webmanifest','bundle.js?v=16-drawer-qa','styles.css?v=15-mobile-nav','sw.js']) {
   const res = await page.request.get('http://127.0.0.1:8080/' + path);
   assert.equal(res.ok(), true, path + ' returned HTTP ' + res.status());
 }
