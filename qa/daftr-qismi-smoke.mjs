@@ -82,3 +82,5 @@ assert.equal(pageErrors.length, 0, 'Runtime errors: ' + pageErrors.join(' | '));
 
 console.log('PASS: Daftr Qismi mobile smoke test');
 await browser.close();
+
+// rerun after planner selector fix
