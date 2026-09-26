@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#123a68" />
+  <title>دفتر القسم الذكي</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">إدارة القسم — تعمل محليًا</div>
+        <h1>دفتر القسم الذكي</h1>
+      </div>
+      <div class="top-actions">
+        <button class="ghost" id="installBtn" hidden>تثبيت التطبيق</button>
+        <button class="ghost" id="backupBtn">نسخة احتياطية</button>
+      </div>
+    </header>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="brand-card">
+        <div class="brand-icon">د</div>
+        <div><strong>دفتر القسم</strong><small>الأستاذ • القسم • التقويم</small></div>
+      </div>
+      <nav id="nav">
+        <button class="nav-item active" data-view="dashboard">▦ <span>لوحة القيادة</span></button>
+        <button class="nav-item" data-view="classes">▣ <span>الأقسام</span></button>
+        <button class="nav-item" data-view="students">👥 <span>التلاميذ</span></button>
+        <button class="nav-item" data-view="attendance">✓ <span>الحضور والغياب</span></button>
+        <button class="nav-item" data-view="grades">★ <span>النقط والفروض</span></button>
+        <button class="nav-item" data-view="notes">✎ <span>الملاحظات والسلوك</span></button>
+        <button class="nav-item" data-view="classroom">⌘ <span>أدوات القسم</span></button>
+        <button class="nav-item" data-view="reports">▤ <span>التقارير</span></button>
+        <button class="nav-item" data-view="settings">⚙ <span>الإعدادات</span></button>
+      </nav>
+      <div class="privacy-note">تبقى البيانات على جهازك في هذه النسخة. خذ نسخة احتياطية دوريًا.</div>
+    </aside>
+
+    <main class="main">
+      <div class="mobile-head">
+        <button id="menuBtn" class="icon-btn">☰</button>
+        <strong id="mobileTitle">لوحة القيادة</strong>
+      </div>
+      <section id="view"></section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <dialog id="modal">
+    <form method="dialog" class="modal-card" id="modalForm">
+      <div class="modal-head"><h3 id="modalTitle"></h3><button value="cancel" class="icon-btn">×</button></div>
+      <div id="modalBody"></div>
+      <div class="modal-actions"><button value="cancel" class="ghost">إلغاء</button><button id="modalSave" value="default" class="primary">حفظ</button></div>
+    </form>
+  </dialog>
+
+  <input type="file" id="restoreInput" accept="application/json" hidden />
+  <script src="app.js"></script>
+</body>
+</html>
