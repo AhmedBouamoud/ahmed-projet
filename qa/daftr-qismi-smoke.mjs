@@ -23,6 +23,7 @@ await page.waitForFunction(() => window.__dqCalendarBridgeReady === true);
 await page.waitForFunction(() => window.__dqGoogleSyncReady === true);
 await page.waitForFunction(() => window.__dqTextbookLinkReady === true);
 await page.waitForFunction(() => window.__dqHananeReady === true);
+await page.waitForFunction(() => window.__dqHananeDirectReady === true);
 await page.waitForTimeout(100);
 assert.equal(pageErrors.length, 0, 'Startup runtime errors: ' + pageErrors.join(' | '));
 
@@ -70,7 +71,7 @@ assert.equal(stored.classes?.some(c => c.name === 'قسم اختبار QA'), tru
 assert.equal(stored.students?.some(s => s.name === 'تلميذ اختبار'), true, 'Student not persisted');
 
 // Verify key PWA assets are reachable.
-for (const path of ['manifest.webmanifest','bundle.js?v=17-qa','mobile-nav.js?v=17-qa','calendar-sync.js?v=18-qa','google-sync.js?v=19-qa','textbook-link.js?v=20-qa','hanane-import.js?v=21-qa','textbook/index.html','styles.css?v=15-mobile-nav','sw.js']) {
+for (const path of ['manifest.webmanifest','bundle.js?v=17-qa','mobile-nav.js?v=17-qa','calendar-sync.js?v=18-qa','google-sync.js?v=19-qa','textbook-link.js?v=20-qa','hanane-import.js?v=21-qa','hanane-direct.js?v=22-qa','textbook/index.html','styles.css?v=15-mobile-nav','sw.js']) {
   const res = await page.request.get('http://127.0.0.1:8080/' + path);
   assert.equal(res.ok(), true, path + ' returned HTTP ' + res.status());
 }
@@ -323,6 +324,57 @@ assert((await page.locator('#view').innerText()).includes('2026-10-30'),'Importe
 const hananeAsset=await page.request.get('http://127.0.0.1:8080/hanane-import.js?v=21-qa');
 assert.equal(hananeAsset.ok(),true,'hanane-import.js not reachable');
 
+
+// Hanane direct-import test
+const fakeHananeHtml = [
+  '<html><body>',
+  '<header>Espace Enseignant BOUMAOUD</header>',
+  '<div class="filters">ÉTABL. : H2 NIVEAU : 1 AC SEM. : S1 TYPE NOTE : Contrôle Classe</div>',
+  '<section class="controls"><div class="control-card">',
+  '<div>Disciplines Sociales</div>',
+  '<div>30-10-2026 08:30</div>',
+  '<div>1 AC/C</div>',
+  '<div>Ctrl : 01</div>',
+  '<ul>',
+  '<li>U01-L01 - التاريخ: حضارة بلاد الرافدين</li>',
+  '<li>U01-L02 - التاريخ: حضارة مصر القديمة</li>',
+  '<li>U03-L01 - الجغرافيا: الأرض شكلها وتمثيلها</li>',
+  '<li>U03-L02 - الجغرافيا: التدرب على رسم الإحداثيات</li>',
+  '<li>U05-L01 - التربية على المواطنة: الكرامة</li>',
+  '<li>U05-L02 - التربية على المواطنة: الحرية</li>',
+  '</ul></div></section>',
+  '<footer>معلومات أخرى غير مطلوبة</footer>',
+  '</body></html>'
+].join('');
+
+const directExtract = await page.evaluate(html => {
+  const t=window.__dqHananeDirectTest.extractFromHtml(html);
+  const p=window.__dqHananeTest.parse(t);
+  const enc=window.__dqHananeDirectTest.toB64Url(t);
+  const dec=window.__dqHananeDirectTest.fromB64Url(enc);
+  const bm=window.__dqHananeDirectTest.bookmarklet('http://127.0.0.1:8080/');
+  return {text:t,parsed:p,roundtrip:t===dec,bookmarklet:bm};
+}, fakeHananeHtml);
+assert(directExtract.text.includes('Ctrl : 01'),'Direct extractor missed control card');
+assert(!directExtract.text.includes('معلومات أخرى غير مطلوبة'),'Direct extractor captured unrelated page text');
+assert.equal(directExtract.parsed.date,'2026-10-30','Direct extractor date parse failed');
+assert.equal(directExtract.parsed.lessons.length,6,'Direct extractor lesson parse failed');
+assert.equal(directExtract.roundtrip,true,'Direct payload encoding round-trip failed');
+assert(directExtract.bookmarklet.startsWith('javascript:'),'Direct bookmarklet was not generated');
+
+const directPayload = await page.evaluate(text => window.__dqHananeDirectTest.toB64Url(text), directExtract.text);
+await page.goto('http://127.0.0.1:8080/#hanane64='+directPayload,{waitUntil:'networkidle'});
+await page.waitForFunction(()=>window.__dqHananeReady===true && window.__dqHananeDirectReady===true);
+await page.waitForSelector('#hananePaste');
+await page.waitForTimeout(150);
+assert.equal(await page.locator('#hananePaste').inputValue(),directExtract.text,'Incoming Hanane payload was not placed in textarea');
+assert((await page.locator('#hananePreview').innerText()).includes('2026-10-30'),'Incoming Hanane payload was not parsed automatically');
+assert.equal(await page.evaluate(()=>location.hash),'','Hanane payload hash was not cleared after receipt');
+
+const directAsset=await page.request.get('http://127.0.0.1:8080/hanane-direct.js?v=22-qa');
+assert.equal(directAsset.ok(),true,'hanane-direct.js not reachable');
+
+
 assert.equal(pageErrors.length, 0, 'Runtime errors after calendar tests: ' + pageErrors.join(' | '));
-console.log('PASS: Daftr Qismi mobile + calendar + linked textbook + Hanane QA');
+console.log('PASS: Daftr Qismi mobile + calendar + linked textbook + Hanane direct QA');
 await browser.close();
