@@ -715,7 +715,7 @@ const v22Bind=bindDynamic;
 bindDynamic=function(){
   v22Bind();
   $$('.curriculum-status').forEach(sel=>sel.onchange=()=>{const x=db.curriculum.find(y=>y.id===sel.dataset.id);if(x){x.status=sel.value;x.completedDate=sel.value==='done'?(x.completedDate||today()):'';saveDB();render()}});
-  $('.day-head [data-act="add-day-event"]').forEach(btn=>btn.onclick=()=>{plannerSelectedDate=btn.dataset.date||today();plannerModal(null,plannerSelectedDate)});
+  $$('.day-head [data-act="add-day-event"]').forEach(btn=>btn.onclick=()=>{plannerSelectedDate=btn.dataset.date||today();plannerModal(null,plannerSelectedDate)});
   const mm=$('#monthlyMonth');if(mm)mm.onchange=()=>{monthlyReportMonth=mm.value||today().slice(0,7);render()};
 };
 
