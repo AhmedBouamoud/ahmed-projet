@@ -34,11 +34,21 @@ jobs:
           test -f daftr-qismi-v3/mobile-nav.js
           test -f daftr-qismi-v3/calendar-sync.js
           test -f daftr-qismi-v3/google-sync.js
+          test -f daftr-qismi-v3/textbook-link.js
+          test -f daftr-qismi-v3/textbook/index.html
           test -f daftr-qismi-v3/manifest.webmanifest
           node --check daftr-qismi-v3/bundle.js
           node --check daftr-qismi-v3/sw.js
           node --check daftr-qismi-v3/calendar-sync.js
           node --check daftr-qismi-v3/google-sync.js
+          node --check daftr-qismi-v3/textbook-link.js
+          python3 - <<'PY'
+import re, pathlib
+s=pathlib.Path('daftr-qismi-v3/textbook/index.html').read_text(encoding='utf-8')
+scripts=re.findall(r'<script[^>]*>([\s\S]*?)</script>',s,flags=re.I)
+pathlib.Path('/tmp/dq-textbook-inline.js').write_text('\n'.join(scripts),encoding='utf-8')
+PY
+          node --check /tmp/dq-textbook-inline.js
           node --check qa/daftr-qismi-smoke.mjs
           node -e "JSON.parse(require('fs').readFileSync('daftr-qismi-v3/manifest.webmanifest','utf8')); console.log('manifest ok')"
           grep -q 'sidebarOverlay' daftr-qismi-v3/index.html
@@ -46,6 +56,8 @@ jobs:
           grep -q 'Mobile drawer v15' daftr-qismi-v3/styles.css
           grep -q 'bundle.js?v=17-qa' daftr-qismi-v3/index.html
           grep -q 'styles.css?v=15-mobile-nav' daftr-qismi-v3/index.html
+          grep -q 'textbook-link.js?v=20-qa' daftr-qismi-v3/index.html
+          grep -q '__dqTextbookLinkedReady' daftr-qismi-v3/textbook/index.html
 
       - name: Install Playwright
         run: |

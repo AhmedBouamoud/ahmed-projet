@@ -21,6 +21,7 @@ await page.waitForSelector('#view', { state: 'visible' });
 await page.waitForFunction(() => window.__dqMobileNavReady === true);
 await page.waitForFunction(() => window.__dqCalendarBridgeReady === true);
 await page.waitForFunction(() => window.__dqGoogleSyncReady === true);
+await page.waitForFunction(() => window.__dqTextbookLinkReady === true);
 await page.waitForTimeout(100);
 assert.equal(pageErrors.length, 0, 'Startup runtime errors: ' + pageErrors.join(' | '));
 
@@ -68,7 +69,7 @@ assert.equal(stored.classes?.some(c => c.name === 'قسم اختبار QA'), tru
 assert.equal(stored.students?.some(s => s.name === 'تلميذ اختبار'), true, 'Student not persisted');
 
 // Verify key PWA assets are reachable.
-for (const path of ['manifest.webmanifest','bundle.js?v=17-qa','mobile-nav.js?v=17-qa','calendar-sync.js?v=18-qa','google-sync.js?v=19-qa','styles.css?v=15-mobile-nav','sw.js']) {
+for (const path of ['manifest.webmanifest','bundle.js?v=17-qa','mobile-nav.js?v=17-qa','calendar-sync.js?v=18-qa','google-sync.js?v=19-qa','textbook-link.js?v=20-qa','textbook/index.html','styles.css?v=15-mobile-nav','sw.js']) {
   const res = await page.request.get('http://127.0.0.1:8080/' + path);
   assert.equal(res.ok(), true, path + ' returned HTTP ' + res.status());
 }
@@ -185,6 +186,78 @@ const googleBodyOk = await page.evaluate(() => {
 assert.equal(googleBodyOk,true,'Google push body is missing app marker');
 
 
+
+// Linked textbook end-to-end test
+await page.bringToFront();
+await page.click('#menuBtn');
+await page.click('#nav [data-view="journal"]');
+await page.waitForSelector('[data-act="add-lesson-log"]');
+await page.click('[data-act="add-lesson-log"]');
+await page.fill('#mDate', qaDate);
+await page.fill('#mDuration', '45 دقيقة');
+await page.fill('#mTitle', 'حصة الربط QA');
+if (await page.locator('#mObjectives').count()) await page.fill('#mObjectives', 'هدف الربط');
+if (await page.locator('#mContent').count()) await page.fill('#mContent', 'محتوى الربط');
+if (await page.locator('#mHomework').count()) await page.fill('#mHomework', 'واجب أولي');
+await page.click('#modalSave');
+await page.waitForTimeout(250);
+assert((await page.locator('#view').innerText()).includes('حصة الربط QA'), 'Linked lesson log was not created');
+
+const linkedClassId = await page.evaluate(() => {
+  const d=JSON.parse(localStorage.getItem('daftr_qismi_v1')||'{}');
+  return d.classes?.find(c=>c.name==='قسم اختبار QA')?.id || d.classes?.[0]?.id || '';
+});
+assert(linkedClassId, 'No class id for textbook link');
+
+await page.waitForFunction((cid)=>{
+  const b=JSON.parse(localStorage.getItem('dq_textbook_bridge_v1')||'{}');
+  return !!b.classes?.[cid]?.sessions?.some(s=>s.title==='حصة الربط QA');
+}, linkedClassId);
+
+const textbookErrors=[];
+const textbookPage=await context.newPage();
+textbookPage.on('pageerror',e=>textbookErrors.push(String(e)));
+textbookPage.on('console',m=>{if(m.type()==='error')textbookErrors.push('console: '+m.text())});
+await textbookPage.goto('http://127.0.0.1:8080/textbook/?class='+encodeURIComponent(linkedClassId),{waitUntil:'networkidle'});
+await textbookPage.waitForFunction(()=>window.__dqTextbookLinkedReady===true);
+await textbookPage.waitForTimeout(250);
+assert((await textbookPage.locator('body').innerText()).includes('حصة الربط QA'), 'Linked textbook did not import the lesson');
+
+const textbookChanged=await textbookPage.evaluate(()=>{
+  const b=window.__dqTextbookLinkedTest.read();
+  const cid=new URLSearchParams(location.search).get('class');
+  const rec=b.classes?.[cid]?.sessions?.find(x=>x.title==='حصة الربط QA');
+  if(!rec)return false;
+  const f=window.__dqTextbookLinkedTest.find(rec.id);
+  if(!f)return false;
+  f.s.homework='واجب معدل من دفتر النصوص';
+  if(f.s.elements?.length)f.s.elements[f.s.elements.length-1].text='محتوى معدل من دفتر النصوص';
+  saveState();
+  return true;
+});
+assert.equal(textbookChanged,true,'Could not edit linked textbook session');
+await textbookPage.waitForTimeout(250);
+
+await page.bringToFront();
+await page.evaluate(()=>window.__dqTextbookLinkTest.pull(false));
+await page.waitForTimeout(120);
+const roundTrip=await page.evaluate(()=>{
+  const d=JSON.parse(localStorage.getItem('daftr_qismi_v1')||'{}');
+  const l=(d.lessonLogs||[]).find(x=>x.title==='حصة الربط QA');
+  return l?{homework:l.homework,content:l.content}:null;
+});
+assert(roundTrip,'Round-trip lesson missing in class app');
+assert.equal(roundTrip.homework,'واجب معدل من دفتر النصوص','Homework did not return from linked textbook');
+assert(roundTrip.content.includes('محتوى معدل من دفتر النصوص'),'Content did not return from linked textbook');
+assert.equal(textbookErrors.length,0,'Linked textbook runtime errors: '+textbookErrors.join(' | '));
+await textbookPage.close();
+
+const textbookAsset=await page.request.get('http://127.0.0.1:8080/textbook-link.js?v=20-qa');
+assert.equal(textbookAsset.ok(),true,'textbook-link.js not reachable');
+const linkedHtml=await page.request.get('http://127.0.0.1:8080/textbook/');
+assert.equal(linkedHtml.ok(),true,'linked textbook page not reachable');
+
+
 assert.equal(pageErrors.length, 0, 'Runtime errors after calendar tests: ' + pageErrors.join(' | '));
-console.log('PASS: Daftr Qismi mobile + calendar bridge QA');
+console.log('PASS: Daftr Qismi mobile + calendar + linked textbook QA');
 await browser.close();
