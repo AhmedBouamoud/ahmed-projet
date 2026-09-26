@@ -677,7 +677,7 @@ function plannerModal(existing=null,presetDate=''){
     const obj={id:e.id||uid('evt'),date,time:$('#mTime').value,title,type:$('#mType').value,classId:$('#mClass').value,details:$('#mDetails').value.trim()};
     if(existing)Object.assign(existing,obj);else db.plannerEvents.push(obj);saveDB();render();return true
   });
-  if(existing){setTimeout(()=>{const b=$('#deletePlannerInside');if(b)b.onclick=()=>{if(confirm('حذف هذا الموعد؟')){db.plannerEvents=db.plannerEvents.filter(x=>x.id!==existing.id);saveDB();$('#modal').close();render()}}},0)}
+  if(existing){setTimeout(()=>{const b=$('#deletePlannerInside');if(b)b.onclick=()=>{if(confirm('حذف هذا الموعد؟')){if(existing.googleEventId&&db.googleCalendar){db.googleCalendar.tombstones||=[];db.googleCalendar.tombstones.push({googleEventId:existing.googleEventId,deletedAt:new Date().toISOString()})}db.plannerEvents=db.plannerEvents.filter(x=>x.id!==existing.id);saveDB();$('#modal').close();render()}}},0)}
 }
 function curriculumModal(existing=null){
   const x=existing||{};
