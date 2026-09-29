@@ -1,7 +1,7 @@
 /* Sharing always uses the public app URL, never imported data or backups. */
 (() => {
   'use strict';
-  const appURL = new URL('./', document.baseURI).href;
+  const appURL = new URL('./?stable=23', document.baseURI).href;
   const dialog = document.getElementById('appShareDialog');
   const status = document.getElementById('appShareStatus');
   const urlField = document.getElementById('appShareURL');

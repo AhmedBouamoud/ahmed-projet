@@ -5,7 +5,7 @@
   "description": "تطبيق للأساتذة لإدارة الأقسام والتلاميذ والحضور والنقط ودفتر النصوص والمفكرة، مع حفظ محلي للبيانات.",
   "lang": "ar",
   "dir": "rtl",
-  "start_url": "./",
+  "start_url": "./?stable=23",
   "scope": "./",
   "display": "standalone",
   "display_override": [
