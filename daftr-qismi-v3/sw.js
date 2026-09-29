@@ -1,5 +1,5 @@
-const CACHE='daftr-qismi-v22-hanane-direct-qa';
-const ASSETS=['./','./index.html','./styles.css?v=15-mobile-nav','./bundle.js?v=17-qa','./mobile-nav.js?v=17-qa','./calendar-sync.js?v=18-qa','./google-sync.js?v=19-qa','./textbook-link.js?v=20-qa','./hanane-import.js?v=21-qa','./hanane-direct.js?v=22-qa','./textbook/index.html','./manifest.webmanifest','./icon-192.svg','./icon-512.svg'];
+const CACHE='daftr-qismi-v3-share-23';
+const ASSETS=['./','./index.html','./styles.css?v=15-mobile-nav','./bundle.js?v=17-qa','./mobile-nav.js?v=17-qa','./calendar-sync.js?v=18-qa','./google-sync.js?v=19-qa','./textbook-link.js?v=20-qa','./hanane-import.js?v=21-qa','./hanane-direct.js?v=22-qa','./textbook/index.html','./manifest.webmanifest','./icon-192.svg','./icon-512.svg','./icon-192.png','./icon-512.png','./share-install.js?v=23','./share-install.css?v=23'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(
@@ -12,13 +12,16 @@ self.addEventListener('install',event=>{
 self.addEventListener('activate',event=>{
   event.waitUntil(
     caches.keys()
-      .then(keys=>Promise.all(keys.filter(k=>k.startsWith('daftr-qismi-')&&k!==CACHE).map(k=>caches.delete(k))))
+      .then(keys=>Promise.all(keys.filter(k=>(k.startsWith('daftr-qismi-v3-')||k==='daftr-qismi-v22-hanane-direct-qa')&&k!==CACHE).map(k=>caches.delete(k))))
       .then(()=>self.clients.claim())
   );
 });
 
 self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET') return;
+  const requestURL=new URL(event.request.url);
+  const appScope=new URL('./',self.location.href);
+  if(requestURL.origin!==appScope.origin || !requestURL.pathname.startsWith(appScope.pathname)) return;
 
   if(event.request.mode==='navigate'){
     event.respondWith((async()=>{

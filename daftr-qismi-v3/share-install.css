@@ -1,0 +1,23 @@
+[hidden]{display:none!important}
+.app-share-dialog{max-height:90dvh;overflow:auto;line-height:1.8}
+.app-share-dialog .share-content{padding:18px 22px}
+.app-share-dialog h4{font-size:17px;margin:16px 0 6px;color:var(--nav)}
+.app-share-dialog p{margin:6px 0 12px}
+.app-share-dialog ol{padding-inline-start:24px;margin:6px 0 12px}
+.app-share-dialog .share-link{display:block;width:100%;min-width:0;font-size:14px;border:1px solid var(--line);padding:12px;border-radius:9px;margin:8px 0 12px;direction:ltr;text-align:left}
+.app-share-dialog .share-actions{display:flex;flex-wrap:wrap;gap:8px}
+.app-share-dialog .share-actions>*{text-decoration:none;text-align:center;flex:1 1 140px}
+.app-share-dialog .share-note{background:#eaf5f1;border-radius:12px;padding:12px 14px;color:#165447}
+.app-share-dialog .share-status{min-height:28px;color:#165447;font-weight:600}
+.app-share-dialog .install-platform{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:10px}
+.app-share-dialog summary{cursor:pointer;font-weight:700}
+.app-mobile-actions{display:none}
+.sidebar{overflow-y:auto;overscroll-behavior:contain}
+@media(max-width:900px){
+  .app-mobile-actions{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px}
+  .app-mobile-actions button{flex:1;min-height:44px}
+  .app-share-dialog .share-content{padding:14px}
+  .app-share-dialog .modal-head{position:sticky;top:0;background:#fff;z-index:1}
+  .mobile-head #menuBtn{min-width:44px;min-height:44px}
+}
+@media print{.app-mobile-actions,.app-share-dialog{display:none!important}}

@@ -4,6 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#123a68" />
+  <meta name="description" content="دفتر القسم الذكي للأساتذة: تنظيم الأقسام والحضور والنقط ودفتر النصوص والمفكرة، مع حفظ البيانات على جهازك." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="دفتر القسم" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="stylesheet" href="share-install.css?v=23" />
   <title>دفتر القسم الذكي</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon-192.svg" />
@@ -17,7 +22,8 @@
         <h1>دفتر القسم الذكي</h1>
       </div>
       <div class="top-actions">
-        <button class="ghost" id="installBtn" hidden>تثبيت التطبيق</button>
+        <button class="ghost" id="installBtn" data-install-app>تثبيت التطبيق</button>
+        <button class="primary" data-share-app>مشاركة التطبيق</button>
         <button class="ghost" id="backupBtn">نسخة احتياطية</button>
       </div>
     </header>
@@ -58,8 +64,12 @@
 
     <main class="main">
       <div class="mobile-head">
-        <button id="menuBtn" class="icon-btn">☰</button>
+        <button id="menuBtn" class="icon-btn" aria-label="فتح القائمة">☰</button>
         <strong id="mobileTitle">لوحة القيادة</strong>
+      </div>
+      <div class="app-mobile-actions" aria-label="التثبيت والمشاركة">
+        <button class="primary" data-share-app>مشاركة التطبيق</button>
+        <button class="ghost" data-install-app>تثبيت التطبيق</button>
       </div>
       <section id="view"></section>
     </main>
@@ -75,11 +85,44 @@
     </form>
   </dialog>
 
+  <dialog id="appShareDialog" class="app-share-dialog" aria-labelledby="appShareTitle">
+    <div class="modal-head"><h3 id="appShareTitle">دفتر القسم لكل أستاذ</h3><button type="button" id="appShareClose" class="icon-btn" aria-label="إغلاق دليل التطبيق">×</button></div>
+    <div class="share-content">
+      <p>شارك التطبيق مع زملائك وثبّته على هاتفك للوصول إليه من الشاشة الرئيسية.</p>
+      <p class="share-note">المشاركة ترسل رابط التطبيق فقط. أقسامك وأسماء التلاميذ ونقطهم لا تُرفق بالرابط. يبدأ الأستاذ على جهاز جديد ببياناته الخاصة، دون إنشاء حساب.</p>
+      <label for="appShareURL"><strong>رابط التطبيق</strong></label>
+      <input id="appShareURL" class="share-link" type="url" readonly dir="ltr" />
+      <div class="share-actions">
+        <button type="button" class="primary" id="appNativeShare">مشاركة الرابط</button>
+        <button type="button" class="ghost" id="appCopyLink">نسخ الرابط</button>
+        <a class="soft" id="appWhatsApp" target="_blank" rel="noopener noreferrer">واتساب</a>
+      </div>
+      <p id="appShareStatus" class="share-status" role="status" aria-live="polite"></p>
+      <h4>ثبّت التطبيق على جهازك</h4>
+      <p id="appInstalledNotice" class="share-note" hidden>أنت تستخدم التطبيق في نافذة مستقلة.</p>
+      <button type="button" id="appInstallNow" class="primary" hidden>تثبيت الآن</button>
+      <details class="install-platform" open><summary>Android — أندرويد</summary><p>افتح الرابط في Chrome، ثم اختر «تثبيت التطبيق». إن لم تظهر نافذة التثبيت، افتح قائمة المتصفح ⋮ واختر «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق».</p></details>
+      <details class="install-platform"><summary>iPhone وiPad</summary><p>افتح الرابط في Safari، ثم اضغط زر المشاركة واختر «إضافة إلى الشاشة الرئيسية» ثم «إضافة».</p></details>
+      <details class="install-platform"><summary>الحاسوب</summary><p>افتح الرابط في Chrome أو Edge، ثم اختر رمز التثبيت في شريط العنوان أو خيار تثبيت التطبيق من قائمة المتصفح.</p></details>
+      <p class="small">إذا فتحت الرابط داخل واتساب أو فيسبوك، اختر أولًا «فتح في المتصفح». أسماء خيارات التثبيت قد تختلف حسب الجهاز.</p>
+      <h4>البداية في ثلاث خطوات</h4>
+      <ol><li>أدخل اسمك والسنة الدراسية في «الإعدادات».</li><li>أنشئ قسمًا، ثم أضف التلاميذ أو استورد اللائحة.</li><li>سجّل الحضور والنقط والحصص، واحتفظ بنسخة احتياطية دوريًا.</li></ol>
+      <button type="button" class="primary" id="appStartClasses">ابدأ بإضافة أقسامك</button>
+      <h4>بياناتك والنسخ الاحتياطي</h4>
+      <p>تُحفظ البيانات في هذا المتصفح على هذا الجهاز. من يستعمل المتصفح نفسه يستطيع الوصول إليها. حذف بيانات الموقع قد يمحو السجلات؛ احفظ نسخة احتياطية خاصة بك. لا تُرسل نسختك الاحتياطية إلى الزملاء عند مشاركة التطبيق.</p>
+      <p>للعمل على هاتف وحاسوب، استخدم «السحابة والأجهزة» لنقل نسختك المشفرة بنفسك؛ لا توجد مزامنة تلقائية للأقسام بين الجهازين.</p>
+      <p class="small">بعد اكتمال التحميل الأول، يمكن استعمال الوظائف المحلية دون إنترنت. ربط Google والمشاركة يحتاجان الاتصال. إعداد الأستاذ أحمد بوعمود.</p>
+    </div>
+  </dialog>
+
   <input type="file" id="restoreInput" accept="application/json" hidden />
   <script src="bundle.js?v=17-qa"></script>
   <script src="mobile-nav.js?v=17-qa"></script>
-  <script src="calendar-sync.js?v=18-qa"></script>\n  <script src="google-sync.js?v=19-qa"></script>\n  <script src="textbook-link.js?v=20-qa"></script>
+  <script src="calendar-sync.js?v=18-qa"></script>
+  <script src="google-sync.js?v=19-qa"></script>
+  <script src="textbook-link.js?v=20-qa"></script>
   <script src="hanane-import.js?v=21-qa"></script>
   <script src="hanane-direct.js?v=22-qa"></script>
+  <script src="share-install.js?v=23"></script>
 </body>
 </html>
