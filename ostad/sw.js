@@ -1,5 +1,5 @@
 /* OSTAD service worker — bump CACHE with every update (e.g. ostad-v0.4.5) */
-const CACHE = 'ostad-v0.4.4';
+const CACHE = 'ostad-v0.4.5';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
