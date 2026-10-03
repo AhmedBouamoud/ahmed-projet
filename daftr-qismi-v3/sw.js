@@ -1,5 +1,5 @@
-const CACHE='daftr-qismi-v3-student-cards-24';
-const ASSETS=['./?stable=24','./index.html?stable=24','./styles.css?v=15-mobile-nav','./bundle.js?v=17-qa','./mobile-nav.js?v=17-qa','./calendar-sync.js?v=18-qa','./google-sync.js?v=19-qa','./textbook-link.js?v=20-qa','./hanane-import.js?v=21-qa','./hanane-direct.js?v=22-qa','./textbook/index.html','./manifest.webmanifest','./icon-192.svg','./icon-512.svg','./icon-192.png','./icon-512.png','./share-install.js?v=23.1','./share-install.css?v=23','./student-cards-memory.js?v=24'];
+const CACHE='daftr-qismi-v3-student-cards-25';
+const ASSETS=['./?stable=25','./index.html?stable=25','./styles.css?v=15-mobile-nav','./bundle.js?v=17-qa','./mobile-nav.js?v=17-qa','./calendar-sync.js?v=18-qa','./google-sync.js?v=19-qa','./textbook-link.js?v=20-qa','./hanane-import.js?v=21-qa','./hanane-direct.js?v=22-qa','./textbook/index.html','./manifest.webmanifest','./icon-192.svg','./icon-512.svg','./icon-192.png','./icon-512.png','./share-install.js?v=23.1','./share-install.css?v=23','./student-cards-memory.js?v=24','./roster-2ace-photos.js?v=25'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(
@@ -27,7 +27,7 @@ self.addEventListener('fetch',event=>{
     event.respondWith((async()=>{
       const url=new URL(event.request.url);
       const textbook=url.pathname.includes('/daftr-qismi-v3/textbook/');
-      const fallback=textbook?'./textbook/index.html':'./index.html?stable=24';
+      const fallback=textbook?'./textbook/index.html':'./index.html?stable=25';
       try{
         const response=await fetch(event.request);
         if(response&&response.ok){
