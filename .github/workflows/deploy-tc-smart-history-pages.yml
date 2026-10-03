@@ -1,5 +1,5 @@
 name: Build and Deploy Mediterranean Master Lesson
-# republish daftr-qismi-v3
+# republish daftr-qismi-v3 student-cards-v24
 
 on:
   push:
